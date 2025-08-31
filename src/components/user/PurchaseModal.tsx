@@ -7,6 +7,7 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Plan, Location } from '../../types';
 import { Wifi } from 'lucide-react';
+import { getCorrectDurationDisplay } from '../../utils/planDurationHelper';
 
 interface PurchaseModalProps {
   plan: Plan;
@@ -110,7 +111,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ plan, onClose }) =
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-blue-200">
                     <span className="text-gray-600">Duration:</span>
-                    <span className="font-semibold text-gray-900">{plan.duration}</span>
+                    <span className="font-semibold text-gray-900">{getCorrectDurationDisplay(plan.durationHours)}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-gray-600">Amount:</span>
@@ -205,7 +206,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ plan, onClose }) =
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                  <p className="text-blue-600 font-medium">{plan.dataAmount} • {plan.duration}</p>
+                  <p className="text-blue-600 font-medium">{plan.dataAmount} • {getCorrectDurationDisplay(plan.durationHours)}</p>
                 </div>
               </div>
               <div className="text-center">

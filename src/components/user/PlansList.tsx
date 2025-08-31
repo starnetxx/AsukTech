@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { PurchaseModal } from './PurchaseModal';
 import { Plan } from '../../types';
 import { ChevronRight, Wifi, Zap, Clock, Star, Sparkles, Rocket, Signal } from 'lucide-react';
+import { getCorrectDurationDisplay } from '../../utils/planDurationHelper';
 
 interface PlansListProps {
   showAll?: boolean;
@@ -235,7 +236,7 @@ export const PlansList: React.FC<PlansListProps> = ({ showAll = false, onSeeAllC
                   {plan.name}
                   </h3>
                   <p className="text-white/90 text-xs sm:text-sm font-medium">
-                    {plan.dataAmount} • {plan.duration}
+                    {plan.dataAmount} • {getCorrectDurationDisplay(plan.durationHours)}
                   </p>
               </div>
 
@@ -245,7 +246,7 @@ export const PlansList: React.FC<PlansListProps> = ({ showAll = false, onSeeAllC
                     ₦{plan.price.toLocaleString()}
                   </div>
                   <p className="text-white/80 text-xs sm:text-sm font-medium">
-                    {plan.duration.toLowerCase()}
+                    {getCorrectDurationDisplay(plan.durationHours).toLowerCase()}
                   </p>
             </div>
 

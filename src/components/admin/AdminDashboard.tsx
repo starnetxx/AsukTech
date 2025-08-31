@@ -8,16 +8,17 @@ import { CredentialManager } from './CredentialManager';
 import { PlanManager } from './PlanManager';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { MapPin, DollarSign, Users, Wifi, Key, List, Trophy, Settings, Bell } from 'lucide-react';
+import { MapPin, DollarSign, Users, Wifi, Key, List, Trophy, Settings, Bell, FlaskConical } from 'lucide-react';
 import { UsersManager } from './UsersManager';
 import { Leaderboard } from './Leaderboard';
 import { AdminSettings } from './AdminSettings';
 import { NotificationManager } from './NotificationManager';
+import { PlanTestRunner } from './PlanTestRunner';
 import { User } from '../../types';
 import { debugAdminDataLoading } from '../../utils/debugAdminData';
 import { testRLS } from '../../utils/testRLS';
 
-type AdminPage = 'overview' | 'plans' | 'locations' | 'credentials' | 'transactions' | 'referrals' | 'users' | 'leaderboard' | 'notifications' | 'settings';
+type AdminPage = 'overview' | 'plans' | 'locations' | 'credentials' | 'transactions' | 'referrals' | 'users' | 'leaderboard' | 'notifications' | 'settings' | 'tests';
 
 export const AdminDashboard: React.FC = () => {
   const [activePage, setActivePage] = useState<AdminPage>('overview');
@@ -45,6 +46,8 @@ export const AdminDashboard: React.FC = () => {
         return <NotificationManager />;
       case 'settings':
         return <AdminSettings />;
+      case 'tests':
+        return <PlanTestRunner />;
       default:
         return <AdminOverview />;
     }
@@ -79,6 +82,7 @@ export const AdminDashboard: React.FC = () => {
                   { id: 'users', label: 'Users', icon: Users },
                   { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
                   { id: 'notifications', label: 'Notifications', icon: Bell },
+                  { id: 'tests', label: 'System Tests', icon: FlaskConical },
                   { id: 'settings', label: 'Settings', icon: Settings },
                 ].map((item) => {
                   const Icon = item.icon;

@@ -4,7 +4,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useData } from '../../contexts/DataContext';
 import { Purchase } from '../../types';
-import { Calendar, DollarSign, Filter } from 'lucide-react';
+import { Calendar, DollarSign, Filter, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 
 export const TransactionsView: React.FC = () => {
@@ -12,6 +12,10 @@ export const TransactionsView: React.FC = () => {
   const [fundings, setFundings] = useState<any[]>([]);
   const [filterLocation, setFilterLocation] = useState('');
   const [filterDate, setFilterDate] = useState('');
+  const [filterTimeRange, setFilterTimeRange] = useState<'all' | 'hour' | 'day' | 'week' | 'month'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'expired' | 'used' | 'pending'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   
   const allPurchases = getAllPurchases();
 
@@ -28,9 +32,42 @@ export const TransactionsView: React.FC = () => {
   }, []);
   
   const filteredPurchases = allPurchases.filter(purchase => {
+    // Location filter
     const locationMatch = !filterLocation || purchase.locationId === filterLocation;
+    
+    // Date filter
     const dateMatch = !filterDate || purchase.purchaseDate.startsWith(filterDate);
-    return locationMatch && dateMatch;
+    
+    // Time range filter
+    let timeRangeMatch = true;
+    if (filterTimeRange !== 'all') {
+      const purchaseTime = new Date(purchase.purchaseDate).getTime();
+      const now = Date.now();
+      const ranges = {
+        'hour': 60 * 60 * 1000,
+        'day': 24 * 60 * 60 * 1000,
+        'week': 7 * 24 * 60 * 60 * 1000,
+        'month': 30 * 24 * 60 * 60 * 1000
+      };
+      timeRangeMatch = (now - purchaseTime) <= ranges[filterTimeRange];
+    }
+    
+    // Status filter
+    const statusMatch = filterStatus === 'all' || purchase.status === filterStatus;
+    
+    // Search filter (search in user ID, plan name, location name)
+    let searchMatch = true;
+    if (searchTerm) {
+      const plan = plans.find(p => p.id === purchase.planId);
+      const location = locations.find(l => l.id === purchase.locationId);
+      const searchLower = searchTerm.toLowerCase();
+      searchMatch = 
+        purchase.userId.toLowerCase().includes(searchLower) ||
+        (plan?.name?.toLowerCase().includes(searchLower) || false) ||
+        (location?.name?.toLowerCase().includes(searchLower) || false);
+    }
+    
+    return locationMatch && dateMatch && timeRangeMatch && statusMatch && searchMatch;
   });
 
   const totalRevenue = filteredPurchases.reduce((sum, purchase) => sum + purchase.amount, 0);
@@ -53,25 +90,90 @@ export const TransactionsView: React.FC = () => {
     };
   }, [filteredPurchases]);
 
-  // Pagination
+  // Enhanced Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(filteredPurchases.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentPagePurchases = filteredPurchases.slice(startIndex, endIndex);
 
   const resetPagination = () => setCurrentPage(1);
+  
+  // Calculate page numbers to display
+  const getPageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+    let l;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+        range.push(i);
+      }
+    }
+
+    range.forEach((i) => {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l !== 1) {
+          rangeWithDots.push('...');
+        }
+      }
+      rangeWithDots.push(i);
+      l = i;
+    });
+
+    return rangeWithDots;
+  };
+  
+  // Export functionality
+  const exportToCSV = () => {
+    const headers = ['Date', 'User ID', 'Plan', 'Location', 'Amount', 'Status'];
+    const rows = filteredPurchases.map(purchase => {
+      const plan = plans.find(p => p.id === purchase.planId);
+      const location = locations.find(l => l.id === purchase.locationId);
+      return [
+        new Date(purchase.purchaseDate).toLocaleDateString(),
+        purchase.userId.slice(0, 8),
+        plan?.name || 'Unknown',
+        location?.name || 'Unknown',
+        purchase.amount.toFixed(2),
+        purchase.status
+      ];
+    });
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 className="text-xl font-semibold text-gray-900">Transactions & Analytics</h2>
-        <div className="flex items-center gap-2">
-          <Filter size={16} />
-          <span className="text-sm text-gray-600">
-            {filteredPurchases.length} transactions
-          </span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={exportToCSV}
+            className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Download size={16} />
+            Export CSV
+          </button>
+          <div className="flex items-center gap-2">
+            <Filter size={16} />
+            <span className="text-sm text-gray-600">
+              {filteredPurchases.length} transactions
+            </span>
+          </div>
         </div>
       </div>
 
@@ -136,30 +238,126 @@ export const TransactionsView: React.FC = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Filter by Location
-            </label>
-            <select
-              value={filterLocation}
-              onChange={(e) => { setFilterLocation(e.target.value); resetPagination(); }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Locations</option>
-              {locations.map((location) => (
-                <option key={location.id} value={location.id}>
-                  {location.name}
-                </option>
-              ))}
-            </select>
+        {/* Enhanced Filters */}
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Filters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* Search */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Search
+              </label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); resetPagination(); }}
+                placeholder="User ID, Plan, Location..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            {/* Location Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Location
+              </label>
+              <select
+                value={filterLocation}
+                onChange={(e) => { setFilterLocation(e.target.value); resetPagination(); }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Locations</option>
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Time Range Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Time Range
+              </label>
+              <select
+                value={filterTimeRange}
+                onChange={(e) => { setFilterTimeRange(e.target.value as any); resetPagination(); }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Time</option>
+                <option value="hour">Last Hour</option>
+                <option value="day">Last 24 Hours</option>
+                <option value="week">Last Week</option>
+                <option value="month">Last Month</option>
+              </select>
+            </div>
+            
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={filterStatus}
+                onChange={(e) => { setFilterStatus(e.target.value as any); resetPagination(); }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="expired">Expired</option>
+                <option value="used">Used</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            
+            {/* Date Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Specific Date
+              </label>
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(e) => { setFilterDate(e.target.value); resetPagination(); }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            
+            {/* Items per page */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Items per page
+              </label>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => { setItemsPerPage(Number(e.target.value)); resetPagination(); }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
           </div>
-          <Input
-            label="Filter by Date"
-            type="date"
-            value={filterDate}
-            onChange={(v) => { setFilterDate(v); resetPagination(); }}
-          />
+          
+          {/* Clear Filters Button */}
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setFilterLocation('');
+                setFilterTimeRange('all');
+                setFilterStatus('all');
+                setFilterDate('');
+                resetPagination();
+              }}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Clear All Filters
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-blue-50 p-3 rounded">
@@ -233,23 +431,70 @@ export const TransactionsView: React.FC = () => {
           )}
         </div>
 
+        {/* Enhanced Pagination */}
         {filteredPurchases.length > 0 && (
-          <div className="flex items-center justify-between pt-4">
-            <button
-              className="px-3 py-1 border rounded text-sm disabled:opacity-50"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              Prev
-            </button>
-            <span className="text-sm text-gray-600">Page {currentPage} of {totalPages}</span>
-            <button
-              className="px-3 py-1 border rounded text-sm disabled:opacity-50"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </button>
+          <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-4">
+            <div className="text-sm text-gray-600">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredPurchases.length)} of {filteredPurchases.length} transactions
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4 inline" />
+                <ChevronLeft className="w-4 h-4 inline -ml-2" />
+              </button>
+              
+              <button
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4 inline" />
+                Prev
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((pageNum, idx) => (
+                  pageNum === '...' ? (
+                    <span key={`dots-${idx}`} className="px-2 py-1 text-gray-400">...</span>
+                  ) : (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(Number(pageNum))}
+                      className={`px-3 py-1 rounded-lg text-sm transition-colors ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white'
+                          : 'hover:bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  )
+                ))}
+              </div>
+              
+              <button
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="w-4 h-4 inline" />
+              </button>
+              
+              <button
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="w-4 h-4 inline -mr-2" />
+                <ChevronRight className="w-4 h-4 inline" />
+              </button>
+            </div>
           </div>
         )}
       </Card>
