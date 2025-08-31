@@ -16,6 +16,8 @@ export const TransactionsView: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'expired' | 'used' | 'pending'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [fundingPage, setFundingPage] = useState(1);
+  const [showAllFundings, setShowAllFundings] = useState(false);
   
   const allPurchases = getAllPurchases();
 
@@ -212,29 +214,96 @@ export const TransactionsView: React.FC = () => {
 
         {/* Recent Wallet Fundings (includes Admin deposits) */}
         <div className="mb-6">
-          <h3 className="text-md font-semibold mb-3">Recent Wallet Fundings</h3>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-md font-semibold">Recent Wallet Fundings</h3>
+            {fundings.length > 5 && (
+              <button
+                onClick={() => setShowAllFundings(!showAllFundings)}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                {showAllFundings ? 'Show Less' : `View All (${fundings.length})`}
+              </button>
+            )}
+          </div>
           {fundings.length === 0 ? (
             <div className="text-sm text-gray-500">No wallet funding records</div>
           ) : (
-            <div className="space-y-2">
-              {fundings.map(f => (
-                <div key={f.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                  <div className="text-sm text-gray-700">
-                    <div>
-                      <span className="font-medium">User:</span> {String(f.user_id).slice(0,8)}...
+            <>
+              <div className="space-y-2">
+                {(() => {
+                  const displayFundings = showAllFundings ? fundings : fundings.slice(0, 5);
+                  const fundingsPerPage = 10;
+                  const paginatedFundings = showAllFundings 
+                    ? displayFundings.slice((fundingPage - 1) * fundingsPerPage, fundingPage * fundingsPerPage)
+                    : displayFundings;
+                  
+                  return paginatedFundings.map(f => (
+                    <div key={f.id} className="flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
+                      <div className="text-sm text-gray-700">
+                        <div>
+                          <span className="font-medium">User:</span> {String(f.user_id).slice(0,8)}...
+                        </div>
+                        <div className="text-xs text-gray-500">{new Date(f.created_at).toLocaleString()}</div>
+                        {f.details?.method && (
+                          <div className="text-xs text-purple-700">Method: {f.details.method}</div>
+                        )}
+                        {f.reference && (
+                          <div className="text-xs text-gray-600">Ref: {f.reference.slice(0, 12)}...</div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-green-700">₦{Number(f.amount).toLocaleString()}</div>
+                        <div className="text-xs text-gray-600 capitalize">{f.status}</div>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">{new Date(f.created_at).toLocaleString()}</div>
-                    {f.details?.method && (
-                      <div className="text-xs text-purple-700">Method: {f.details.method}</div>
-                    )}
+                  ));
+                })()}
+              </div>
+              
+              {/* Pagination for fundings when showing all */}
+              {showAllFundings && fundings.length > 10 && (
+                <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                  <div className="text-xs text-gray-600">
+                    Showing {((fundingPage - 1) * 10) + 1} to {Math.min(fundingPage * 10, fundings.length)} of {fundings.length} fundings
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-green-700">₦{Number(f.amount).toLocaleString()}</div>
-                    <div className="text-xs text-gray-600 capitalize">{f.status}</div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setFundingPage(p => Math.max(1, p - 1))}
+                      disabled={fundingPage === 1}
+                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Previous
+                    </button>
+                    <span className="px-3 py-1 text-sm">
+                      Page {fundingPage} of {Math.ceil(fundings.length / 10)}
+                    </span>
+                    <button
+                      onClick={() => setFundingPage(p => Math.min(Math.ceil(fundings.length / 10), p + 1))}
+                      disabled={fundingPage >= Math.ceil(fundings.length / 10)}
+                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Next
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+              
+              {/* Summary Statistics */}
+              <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-green-700">Total Fundings:</span>
+                    <span className="font-semibold text-green-900 ml-2">{fundings.length}</span>
+                  </div>
+                  <div>
+                    <span className="text-green-700">Total Amount:</span>
+                    <span className="font-semibold text-green-900 ml-2">
+                      ₦{fundings.reduce((sum, f) => sum + Number(f.amount), 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
