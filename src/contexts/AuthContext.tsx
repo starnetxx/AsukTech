@@ -80,35 +80,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Save remember me credentials before clearing
     const rememberMeData = localStorage.getItem('starnetx_auth_data');
     
-    // Clear localStorage (except remember me)
+    // Only clear Supabase auth keys, not all storage
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key !== 'starnetx_auth_data' && (key.includes('supabase') || key.includes('auth') || key.includes('sb-') || key.includes('starnetx'))) {
+      // Be more selective - only clear actual Supabase auth keys
+      if (key && key.startsWith('sb-') && key.includes('auth-token')) {
         keysToRemove.push(key);
       }
     }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    keysToRemove.forEach(key => {
+      console.log('Removing auth key:', key);
+      localStorage.removeItem(key);
+    });
     
     // Restore remember me credentials if they existed
     if (rememberMeData) {
       localStorage.setItem('starnetx_auth_data', rememberMeData);
     }
-    
-    // Clear sessionStorage
-    const sessionKeysToRemove = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key && (key.includes('supabase') || key.includes('auth') || key.includes('sb-'))) {
-        sessionKeysToRemove.push(key);
-      }
-    }
-    sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
-    
-    // Clear cookies (if accessible)
-    document.cookie.split(";").forEach((c) => {
-      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-    });
   };
 
   useEffect(() => {
@@ -125,18 +114,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         console.log('Starting initial auth session check...');
         
-        // Clear all auth data on page refresh to force re-authentication
-        clearAllAuthData();
+        // Try to get existing session first
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        // Sign out from Supabase to ensure clean state
-        await supabase.auth.signOut();
+        if (error) {
+          console.error('Error getting session:', error);
+          setAuthUser(null);
+          setUser(null);
+          setLoading(false);
+          setInitialAuthCheck(true);
+          setSessionLoaded(true);
+          return;
+        }
         
-        console.log('Cleared auth data, showing login page');
-        setAuthUser(null);
-        setUser(null);
-        setLoading(false);
-        setInitialAuthCheck(true);
-        setSessionLoaded(true);
+        if (session?.user) {
+          console.log('Found existing session for:', session.user.email);
+          setAuthUser(session.user);
+          setSessionLoaded(true);
+          
+          // Fetch user profile
+          fetchUserProfileWithTimeout(session.user.id)
+            .then(() => {
+              console.log('Profile loaded from existing session');
+            })
+            .finally(() => {
+              if (mounted) {
+                setLoading(false);
+                setInitialAuthCheck(true);
+              }
+            });
+        } else {
+          console.log('No existing session found');
+          setAuthUser(null);
+          setUser(null);
+          setLoading(false);
+          setInitialAuthCheck(true);
+          setSessionLoaded(true);
+        }
       } catch (error) {
         console.error('Unexpected error in getInitialSession:', error);
         if (mounted) {

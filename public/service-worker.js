@@ -23,8 +23,9 @@ const NO_CACHE_PATTERNS = [
   /\/credentials/,
   /\/transactions/,
   /\/wallet/,
-  /supabase\.co/,
-  /\/rest\/v1\//
+  /supabase/,  // Match any supabase URL
+  /\/rest\//,  // Match any REST API
+  /\.supabase\./,  // Match supabase domains
 ];
 
 // Install event - cache static assets
@@ -98,20 +99,13 @@ self.addEventListener('fetch', (event) => {
   }
   
   // Check if this is an API request that should not be cached
-  const shouldNotCache = NO_CACHE_PATTERNS.some(pattern => pattern.test(url.pathname) || pattern.test(url.href));
+  const shouldNotCache = NO_CACHE_PATTERNS.some(pattern => pattern.test(url.pathname) || pattern.test(url.href) || pattern.test(url.hostname));
   
   if (shouldNotCache) {
     // Network only strategy for API calls - never cache user data
+    // Pass through the request without modification
     event.respondWith(
-      fetch(request, {
-        cache: 'no-store',
-        headers: {
-          ...request.headers,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      }).catch((error) => {
+      fetch(request).catch((error) => {
         console.error('[Service Worker] Network request failed:', error);
         // Return a custom offline response for API calls
         return new Response(
