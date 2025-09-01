@@ -70,6 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profileLoading, setProfileLoading] = useState(false);
   const [initialAuthCheck, setInitialAuthCheck] = useState(false);
   const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [lastProfileFetch, setLastProfileFetch] = useState<number>(0);
+  const [isRefreshingSession, setIsRefreshingSession] = useState(false);
 
   // Clear all auth data from storage (except remember me credentials)
   const clearAllAuthData = () => {
@@ -238,30 +240,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Add network status monitoring
+  // Add network status monitoring and visibility change handling
   useEffect(() => {
     const handleOnline = () => {
       console.log('Network connection restored, attempting to recover profile...');
-      if (authUser?.id && isUserDegraded()) {
-        // Wait a bit for the connection to stabilize
+      if (authUser?.id) {
+        // Force refresh profile when coming back online
         setTimeout(() => {
-          void recoverUserProfile();
-        }, 2000);
+          void fetchUserProfileWithTimeout(authUser.id, true);
+        }, 1000);
       }
     };
 
     const handleOffline = () => {
       console.log('Network connection lost');
     };
+    
+    const handleVisibilityChange = (event: CustomEvent) => {
+      if (event.detail?.visible && authUser?.id) {
+        console.log('App became visible, checking session freshness...');
+        const timeSinceLastFetch = Date.now() - lastProfileFetch;
+        // If profile is older than 5 minutes, refresh it
+        if (timeSinceLastFetch > 5 * 60 * 1000) {
+          console.log('Profile data is stale, refreshing...');
+          void fetchUserProfileWithTimeout(authUser.id, true);
+        }
+      }
+    };
+    
+    const handleOnlineStatusChange = (event: CustomEvent) => {
+      if (event.detail?.online && authUser?.id) {
+        console.log('App online status changed to:', event.detail.online);
+        // Force refresh when coming back online
+        if (event.detail.online) {
+          void fetchUserProfileWithTimeout(authUser.id, true);
+        }
+      }
+    };
+    
+    const handleSyncData = () => {
+      if (authUser?.id && !isRefreshingSession) {
+        console.log('Service worker requested data sync');
+        setIsRefreshingSession(true);
+        fetchUserProfileWithTimeout(authUser.id, true)
+          .finally(() => setIsRefreshingSession(false));
+      }
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
+    window.addEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
+    window.addEventListener('sw-sync-data', handleSyncData);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
+      window.removeEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
+      window.removeEventListener('sw-sync-data', handleSyncData);
     };
-  }, [authUser?.id, user]);
+  }, [authUser?.id, lastProfileFetch, isRefreshingSession]);
 
   // Add periodic connection health check
   useEffect(() => {
@@ -284,15 +323,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(interval);
   }, [authUser?.id, user]);
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, forceRefresh: boolean = false) => {
     try {
       setProfileLoading(true);
+      
+      // Add cache-busting for force refresh
+      const timestamp = forceRefresh ? `?t=${Date.now()}` : '';
       
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .single()
+        .then(result => {
+          // Force fresh data by adding a timestamp to prevent caching
+          if (forceRefresh && result.data) {
+            setLastProfileFetch(Date.now());
+          }
+          return result;
+        });
 
       if (error) {
         // Don't log errors loudly, just throw to be handled by caller
@@ -300,7 +349,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data) {
-        console.log('Profile data received:', { id: data.id, email: data.email, role: data.role });
+        console.log('Profile data received:', { id: data.id, email: data.email, role: data.role, timestamp: new Date().toISOString() });
         const userProfile: User = {
           id: data.id,
           email: data.email,
@@ -319,7 +368,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUser(userProfile);
         setIsAdmin(data.role === 'admin');
-        console.log('Profile set successfully');
+        setLastProfileFetch(Date.now());
+        console.log('Profile set successfully at', new Date().toISOString());
         setLoading(false);
       }
     } catch (error) {
@@ -330,7 +380,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const fetchUserProfileWithTimeout = async (userId: string) => {
+  const fetchUserProfileWithTimeout = async (userId: string, forceRefresh: boolean = false) => {
     try {
       setProfileLoading(true);
       
@@ -342,7 +392,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Try to fetch profile quickly
         await Promise.race([
-          fetchUserProfile(userId),
+          fetchUserProfile(userId, forceRefresh),
           quickTimeoutPromise
         ]);
         return; // Success!
@@ -355,7 +405,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false); // User can use the app now
           
           // Continue trying to fetch full profile in background (no await)
-          fetchUserProfile(userId).then(() => {
+          fetchUserProfile(userId, forceRefresh).then(() => {
             console.log('Full profile loaded in background');
           }).catch(() => {
             console.log('Background profile fetch failed, continuing with minimal profile');
@@ -436,9 +486,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthUser(data.user);
         setSessionLoaded(true);
         
-        // Try to fetch profile but don't fail login if it fails
+        // Force fresh profile fetch on login
         try {
-          await fetchUserProfile(data.user.id);
+          await fetchUserProfile(data.user.id, true); // Force refresh on login
         } catch (profileError) {
           console.warn('Profile fetch failed during login, using minimal profile:', profileError);
           const minimalProfile = createMinimalUserProfile(data.user);

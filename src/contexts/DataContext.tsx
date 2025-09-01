@@ -43,10 +43,47 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userDataLoading, setUserDataLoading] = useState(false);
   const [isPurchaseInProgress, setIsPurchaseInProgress] = useState(false);
   const [initialLoadStarted, setInitialLoadStarted] = useState(false);
+  const [lastDataRefresh, setLastDataRefresh] = useState<number>(0);
 
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  // Handle app visibility changes and sync requests
+  useEffect(() => {
+    const handleVisibilityChange = (event: CustomEvent) => {
+      if (event.detail?.visible) {
+        const timeSinceLastRefresh = Date.now() - lastDataRefresh;
+        // If data is older than 5 minutes, refresh it
+        if (timeSinceLastRefresh > 5 * 60 * 1000) {
+          console.log('App became visible, refreshing stale data...');
+          refreshData();
+        }
+      }
+    };
+
+    const handleSyncData = () => {
+      console.log('Service worker requested data sync');
+      refreshData();
+    };
+
+    const handleOnlineStatusChange = (event: CustomEvent) => {
+      if (event.detail?.online) {
+        console.log('App came online, refreshing data...');
+        refreshData();
+      }
+    };
+
+    window.addEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
+    window.addEventListener('sw-sync-data', handleSyncData);
+    window.addEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
+
+    return () => {
+      window.removeEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
+      window.removeEventListener('sw-sync-data', handleSyncData);
+      window.removeEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
+    };
+  }, [lastDataRefresh]);
 
   // After auth login, reload user-scoped data so UI reflects purchases without manual refresh
   useEffect(() => {
@@ -121,6 +158,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       console.log('Initial data load complete');
+      setLastDataRefresh(Date.now());
     } catch (error) {
       console.error('Error loading initial data:', error);
       setLoading(false); // Ensure loading stops even on error
@@ -1009,7 +1047,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getAllTransactions,
       refreshData: async () => {
         // Force a fresh load of all data
-        console.log('Refreshing all data...');
+        console.log('Refreshing all data at', new Date().toISOString());
         setLoading(true);
         try {
           // Load public data
@@ -1027,6 +1065,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               loadTransactions()
             ]);
           }
+          
+          // Update last refresh timestamp
+          setLastDataRefresh(Date.now());
+          console.log('Data refresh completed successfully');
         } catch (error) {
           console.error('Error refreshing data:', error);
         } finally {

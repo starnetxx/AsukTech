@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { AuthForm } from './components/auth/AuthForm';
 import { UserDashboard } from './components/user/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { initPWASessionManagement, debugStorage } from './utils/pwaUtils';
 
 // Import auth debug utilities (available in console as window.authDebug)
 import './utils/authDebug';
@@ -17,6 +18,11 @@ import './utils/debugStuckLoading';
 import './utils/debugDataLoading';
 // Import Supabase data debug utility (available in console as window.supabaseDebug)
 import './utils/supabaseDataDebug';
+
+// Make PWA debug available in console
+if (typeof window !== 'undefined') {
+  (window as any).pwaDebug = debugStorage;
+}
 
 function AppContent() {
   const { user, authUser, isAdmin, loading, shouldShowLogin, sessionLoaded } = useAuth();
@@ -47,6 +53,14 @@ function AppContent() {
 }
 
 function App() {
+  useEffect(() => {
+    // Initialize PWA session management
+    initPWASessionManagement();
+    
+    // Log PWA status
+    console.log('PWA initialized. Debug with: window.pwaDebug()');
+  }, []);
+
   return (
     <AuthProvider>
       <DataProvider>

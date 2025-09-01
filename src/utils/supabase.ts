@@ -9,38 +9,85 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: false, // Don't persist session in storage
-    autoRefreshToken: false, // Don't auto-refresh tokens
+    persistSession: true, // Enable session persistence for PWA
+    autoRefreshToken: true, // Enable auto-refresh for better UX
     detectSessionInUrl: true,
     storageKey: 'starnetx-auth-token',
     storage: {
-      // Custom storage that expires after 5 minutes
+      // Enhanced storage with better session validation for PWA
       getItem: (key: string) => {
-        const item = localStorage.getItem(key);
-        if (!item) return null;
-        
         try {
-          const data = JSON.parse(item);
-          const now = new Date().getTime();
+          const item = localStorage.getItem(key);
+          if (!item) return null;
           
-          // Check if data has expired (5 minutes = 300000ms)
-          if (data.expiry && now > data.expiry) {
-            localStorage.removeItem(key);
-            return null;
+          // Try to parse as our custom format first
+          try {
+            const data = JSON.parse(item);
+            
+            // Check if this is our custom wrapped format
+            if (data.value && data.expiry) {
+              const now = new Date().getTime();
+              
+              // Check if data has expired (30 minutes for PWA)
+              if (now > data.expiry) {
+                console.log('Session expired, removing from storage');
+                localStorage.removeItem(key);
+                return null;
+              }
+              
+              return JSON.stringify(data.value);
+            }
+            
+            // If not our format, validate as regular Supabase session
+            if (data.access_token && data.expires_at) {
+              const expiresAt = data.expires_at * 1000; // Convert to milliseconds
+              const now = new Date().getTime();
+              
+              if (now >= expiresAt) {
+                console.log('Access token expired, removing from storage');
+                localStorage.removeItem(key);
+                return null;
+              }
+            }
+            
+            // Return the original item if it's valid
+            return item;
+          } catch {
+            // If parsing fails, return as-is (might be a string token)
+            return item;
           }
-          
-          return JSON.stringify(data.value);
-        } catch {
-          return item;
+        } catch (error) {
+          console.error('Error reading from storage:', error);
+          return null;
         }
       },
       setItem: (key: string, value: string) => {
-        const now = new Date().getTime();
-        const item = {
-          value: JSON.parse(value),
-          expiry: now + (5 * 60 * 1000), // 5 minutes from now
-        };
-        localStorage.setItem(key, JSON.stringify(item));
+        try {
+          const now = new Date().getTime();
+          
+          // Try to parse the value to check if it's a session object
+          try {
+            const parsed = JSON.parse(value);
+            
+            // If it's a Supabase session, wrap it with our expiry
+            if (parsed.access_token) {
+              const item = {
+                value: parsed,
+                expiry: now + (30 * 60 * 1000), // 30 minutes for PWA
+                createdAt: now
+              };
+              localStorage.setItem(key, JSON.stringify(item));
+            } else {
+              // Store as-is if not a session
+              localStorage.setItem(key, value);
+            }
+          } catch {
+            // If can't parse, store as-is
+            localStorage.setItem(key, value);
+          }
+        } catch (error) {
+          console.error('Error writing to storage:', error);
+        }
       },
       removeItem: (key: string) => {
         localStorage.removeItem(key);
@@ -54,7 +101,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': 'starnetx-web-app',
+      'X-Client-Info': 'starnetx-pwa',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache'
     },
   },
 })
