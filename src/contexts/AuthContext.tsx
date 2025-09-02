@@ -77,8 +77,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearAllAuthData = () => {
     console.log('Clearing auth data from storage (preserving remember me)...');
     
-    // Save remember me credentials before clearing
-    const rememberMeData = localStorage.getItem('starnetx_auth_data');
+    // Save remember me credentials before clearing (support legacy and new)
+    const rememberMeData = localStorage.getItem('starline_auth_data') || localStorage.getItem('starnetx_auth_data');
     
     // Only clear Supabase auth keys, not all storage
     const keysToRemove = [];
@@ -96,7 +96,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Restore remember me credentials if they existed
     if (rememberMeData) {
-      localStorage.setItem('starnetx_auth_data', rememberMeData);
+      localStorage.setItem('starline_auth_data', rememberMeData);
+      try { localStorage.removeItem('starnetx_auth_data'); } catch {}
     }
   };
 
@@ -423,6 +424,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('Full profile loaded in background');
           }).catch(() => {
             console.log('Background profile fetch failed, continuing with minimal profile');
+            // If background still fails, ensure session doesn't linger too long (5 min policy)
+            setTimeout(async () => {
+              try {
+                await supabase.auth.refreshSession();
+              } catch {}
+            }, 5 * 60 * 1000);
           });
         }
       }

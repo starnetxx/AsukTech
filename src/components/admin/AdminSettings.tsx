@@ -35,7 +35,7 @@ export const AdminSettings: React.FC = () => {
     funding_charge_value: 2,
     funding_charge_min_deposit: 100,
     funding_charge_max_deposit: 0,
-    referral_share_base_url: 'https://starnetx.com/signup',
+    referral_share_base_url: 'https://starlinenetworks.com/signup',
     referral_min_payout: 500,
     referral_howitworks_step1_title: 'Share your referral code',
     referral_howitworks_step1_desc: 'Send your unique link to friends and family',
@@ -72,7 +72,7 @@ export const AdminSettings: React.FC = () => {
           funding_charge_value: parseFloat(settingsMap.funding_charge_value || '2'),
           funding_charge_min_deposit: parseFloat(settingsMap.funding_charge_min_deposit || '100'),
           funding_charge_max_deposit: parseFloat(settingsMap.funding_charge_max_deposit || '0'),
-          referral_share_base_url: settingsMap.referral_share_base_url || 'https://starnetx.com/signup',
+          referral_share_base_url: settingsMap.referral_share_base_url || 'https://starlinenetworks.com/signup',
           referral_min_payout: parseFloat(settingsMap.referral_min_payout || '500'),
           referral_howitworks_step1_title: settingsMap.referral_howitworks_step1_title || 'Share your referral code',
           referral_howitworks_step1_desc: settingsMap.referral_howitworks_step1_desc || 'Send your unique link to friends and family',
@@ -280,7 +280,7 @@ export const AdminSettings: React.FC = () => {
                   label="Referral Share Base URL (without ?ref=)"
                   value={settings.referral_share_base_url}
                   onChange={(value) => updateSetting('referral_share_base_url', value)}
-                  placeholder="https://starnetx.com/signup"
+                  placeholder="https://starlinenetworks.com/signup"
                 />
                 <Input
                   label="Minimum Payout (₦)"

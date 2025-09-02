@@ -5,7 +5,7 @@ import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { PurchaseModal } from './PurchaseModal';
 import { Plan } from '../../types';
-import { ChevronRight, Wifi, Zap, Clock, Star, Sparkles, Rocket, Signal } from 'lucide-react';
+import { ChevronRight, Wifi, Clock, Sparkles } from 'lucide-react';
 import { getCorrectDurationDisplay } from '../../utils/planDurationHelper';
 
 interface PlansListProps {
@@ -22,43 +22,22 @@ export const PlansList: React.FC<PlansListProps> = ({ showAll = false, onSeeAllC
   // Show loading state only during initial load when there are no plans yet
   if (loading && plans.length === 0) {
     return (
-      <div>
-        {/* Hero Section with Loading State */}
-        <div className="text-center space-y-4 mb-8">
-          <div className="relative inline-block">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl animate-pulse">
-              <Rocket className="text-white" size={32} />
+      <div className="space-y-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 animate-pulse">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-gray-200 rounded-2xl"></div>
+              <div className="flex-1">
+                <div className="h-5 bg-gray-200 rounded w-28 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-36"></div>
+              </div>
             </div>
-            {/* Decorative elements */}
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse"></div>
-            <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full animate-pulse delay-1000"></div>
+            <div className="space-y-3">
+              <div className="h-5 bg-gray-200 rounded w-24"></div>
+              <div className="h-4 bg-gray-200 rounded w-20"></div>
+            </div>
           </div>
-          
-          <h2 className="text-4xl font-black text-gray-900 mb-3 bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
-            {showAll ? 'Choose Your Plan' : 'Featured Plans'}
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            {showAll ? 'Select the perfect plan for your needs' : 'Most popular options'}
-          </p>
-        </div>
-        
-        <div className="space-y-4">
-          {[1, 2].map((i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 animate-pulse">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-gray-200 rounded-2xl"></div>
-                <div className="flex-1">
-                  <div className="h-5 bg-gray-200 rounded w-28 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-36"></div>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="h-5 bg-gray-200 rounded w-24"></div>
-                <div className="h-4 bg-gray-200 rounded w-20"></div>
-              </div>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
     );
   }
@@ -77,37 +56,6 @@ export const PlansList: React.FC<PlansListProps> = ({ showAll = false, onSeeAllC
 
   return (
     <div className="min-h-[calc(100vh-400px)] max-[380px]:min-h-[calc(100vh-350px)] max-[360px]:min-h-[calc(100vh-320px)] max-[350px]:min-h-[calc(100vh-300px)]">
-      {/* Hero Section */}
-      <div className="text-center space-y-4 mb-8">
-        <div className="relative inline-block">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-            <Rocket className="text-white" size={32} />
-          </div>
-          {/* Decorative elements */}
-          <div className="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse"></div>
-          <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full animate-pulse delay-1000"></div>
-        </div>
-        
-        <h2 className="text-4xl font-black text-gray-900 mb-3 bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
-          {showAll ? 'Choose Your Plan' : 'Featured Plans'}
-        </h2>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-          {showAll ? 'Select the perfect plan for your needs' : 'Most popular options'}
-        </p>
-        
-        {!showAll && (
-          <div className="pt-4">
-          <button 
-            onClick={onSeeAllClick}
-              className="inline-flex items-center gap-2 text-blue-600 text-lg font-semibold hover:text-blue-700 transition-all duration-200 hover:scale-105"
-          >
-              View All Plans
-              <ChevronRight className="w-5 h-5" />
-          </button>
-          </div>
-        )}
-      </div>
-
       {isPurchaseInProgress && (
         <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl">
           <div className="flex items-center gap-3">
@@ -121,156 +69,53 @@ export const PlansList: React.FC<PlansListProps> = ({ showAll = false, onSeeAllC
         </div>
       )}
 
-      <div className={showAll ? 'space-y-6' : 'grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'}>
+      <div className={showAll ? 'space-y-4' : 'grid grid-cols-1 sm:grid-cols-2 gap-4'}>
         {displayPlans.map((plan, index) => {
-          // Dynamic color schemes based on plan type
-          const getPlanColors = (planType: string, isPopular: boolean) => {
-            if (isPopular) {
-              return {
-                bg: 'from-blue-500 via-blue-600 to-indigo-600',
-                border: 'border-blue-300',
-                ring: 'ring-blue-500/30',
-                shadow: 'shadow-blue-500/20',
-                iconBg: 'from-blue-500 to-indigo-600',
-                buttonBg: 'from-blue-500 to-indigo-600',
-                buttonShadow: 'shadow-blue-500/30'
-              };
-            }
-            
-            switch (planType) {
-              case '3-hour':
-                return {
-                  bg: 'from-orange-400 via-orange-500 to-red-500',
-                  border: 'border-orange-300',
-                  ring: 'ring-orange-500/20',
-                  shadow: 'shadow-orange-500/15',
-                  iconBg: 'from-orange-400 to-red-500',
-                  buttonBg: 'from-orange-400 to-red-500',
-                  buttonShadow: 'shadow-orange-500/25'
-                };
-              case 'daily':
-                return {
-                  bg: 'from-green-400 via-green-500 to-emerald-600',
-                  border: 'border-green-300',
-                  ring: 'ring-green-500/20',
-                  shadow: 'shadow-green-500/15',
-                  iconBg: 'from-green-400 to-emerald-600',
-                  buttonBg: 'from-green-400 to-emerald-600',
-                  buttonShadow: 'shadow-green-500/25'
-                };
-              case 'weekly':
-                return {
-                  bg: 'from-purple-400 via-purple-500 to-violet-600',
-                  border: 'border-purple-300',
-                  ring: 'ring-purple-500/20',
-                  shadow: 'shadow-purple-500/15',
-                  iconBg: 'from-purple-400 to-violet-600',
-                  buttonBg: 'from-purple-400 to-violet-600',
-                  buttonShadow: 'shadow-purple-500/25'
-                };
-              case 'monthly':
-                return {
-                  bg: 'from-pink-400 via-pink-500 to-rose-600',
-                  border: 'border-pink-300',
-                  ring: 'ring-pink-500/20',
-                  shadow: 'shadow-pink-500/15',
-                  iconBg: 'from-pink-400 to-rose-600',
-                  buttonBg: 'from-pink-400 to-rose-600',
-                  buttonShadow: 'shadow-pink-500/25'
-                };
-              default:
-                return {
-                  bg: 'from-gray-400 via-gray-500 to-slate-600',
-                  border: 'border-gray-300',
-                  ring: 'ring-gray-500/20',
-                  shadow: 'shadow-gray-500/15',
-                  iconBg: 'from-gray-400 to-slate-600',
-                  buttonBg: 'from-gray-400 to-slate-600',
-                  buttonShadow: 'shadow-gray-500/25'
-                };
-            }
-          };
-
-          const colors = getPlanColors(plan.type, plan.popular);
-          
           return (
             <div
-            key={plan.id}
-              className={`group relative bg-gradient-to-br ${colors.bg} rounded-3xl p-4 sm:p-6 border-2 ${colors.border} transition-all duration-500 ${
-                plan.popular 
-                  ? `ring-4 ${colors.ring} shadow-2xl ${colors.shadow}` 
-                  : `ring-2 ${colors.ring} shadow-lg ${colors.shadow} hover:shadow-2xl`
+              key={plan.id}
+              className={`group rounded-3xl relative p-[1px] transition-all duration-200 ${
+                plan.popular
+                  ? 'bg-gradient-to-r from-[#4285F4] to-[#1A73E8] hover:from-[#3367D6] hover:to-[#1557B0]'
+                  : 'bg-gradient-to-r from-[#E3F2FD] to-[#BBDEFB] hover:from-[#CFE8FF] hover:to-[#B7D6FF]'
               } ${
-                isPurchaseInProgress 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : 'cursor-pointer hover:-translate-y-2 hover:scale-105'
+                isPurchaseInProgress ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-0.5'
               }`}
               onClick={() => !isPurchaseInProgress && setSelectedPlan(plan)}
             >
-              {/* Background Pattern */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-3xl"></div>
-              
-              {/* Popular Badge */}
-              {plan.popular && (
-                <div className="absolute -top-4 left-6 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl border-2 border-white/20">
-                  <Star className="w-3 h-3 inline mr-1" />
-                  Most Popular
+              <div className={`relative rounded-3xl overflow-hidden bg-white/20 backdrop-blur-xl border border-white/30`}>
+                {/* Creative header: dark glass with mini sparkline */}
+                <div className={`p-5 pb-4 rounded-t-3xl ${plan.popular ? 'bg-gradient-to-b from-black/80 to-black/60' : 'bg-gradient-to-b from-slate-900/80 to-slate-800/60'} backdrop-blur-md`}> 
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className={`tracking-tight ${plan.popular ? 'text-2xl font-black text-white' : 'text-xl font-extrabold text-white'}`}>{plan.name}</h3>
+                      <p className="text-white/80 text-xs font-medium mt-0.5">{plan.dataAmount} • {getCorrectDurationDisplay(plan.durationHours)}</p>
+                    </div>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${plan.popular ? 'bg-white/10' : 'bg-white/10'}`}>
+                      {plan.popular ? <Sparkles className="text-white" size={18} /> : <div className="w-5 h-5 bg-white/70 rounded-full"></div>}
+                    </div>
+                  </div>
+                  {/* faux sparkline */}
+                  <div className="mt-3 h-8 w-full relative">
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-400/30 via-blue-400/30 to-cyan-400/30"></div>
+                    <div className="absolute bottom-1 left-0 right-0">
+                      <div className="h-0.5 bg-emerald-300/50 rounded"></div>
+                    </div>
+                  </div>
                 </div>
-              )}
 
-                            {/* Plan Icon */}
-              <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl flex items-center justify-center mb-4 sm:mb-6 bg-gradient-to-br ${colors.iconBg} shadow-xl border-2 border-white/30`}>
-                {plan.popular ? (
-                  <Sparkles className="text-white" size={24} />
-                ) : (
-                  <Wifi className="text-white" size={24} />
-                )}
-                {/* Icon Glow */}
-                <div className="absolute inset-0 bg-white/20 rounded-2xl sm:rounded-3xl blur-xl"></div>
-              </div>
-
-              {/* Plan Details */}
-              <div className="relative space-y-3 sm:space-y-4">
-                <div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2 drop-shadow-lg">
-                  {plan.name}
-                  </h3>
-                  <p className="text-white/90 text-xs sm:text-sm font-medium">
-                    {plan.dataAmount} • {getCorrectDurationDisplay(plan.durationHours)}
-                  </p>
-              </div>
-
-                {/* Price */}
-                <div className="pt-1 sm:pt-2">
-                  <div className="text-2xl sm:text-4xl font-black text-white drop-shadow-lg">
-                    ₦{plan.price.toLocaleString()}
+                {/* Footer gradient bar (matches Upgrade Account colors) */}
+                <div className={`p-4 flex items-center justify-between rounded-b-3xl bg-gradient-to-r from-[#4285F4] via-[#3367D6] to-[#1A73E8]`}>
+                  <div>
+                    <div className={`leading-none text-white font-black text-xl drop-shadow`}>₦{plan.price.toLocaleString()}</div>
+                    <p className={`text-white/90 text-[11px] font-semibold mt-0.5`}>{getCorrectDurationDisplay(plan.durationHours).toUpperCase()}</p>
                   </div>
-                  <p className="text-white/80 text-xs sm:text-sm font-medium">
-                    {getCorrectDurationDisplay(plan.durationHours).toLowerCase()}
-                  </p>
-            </div>
-
-                {/* Action Button */}
-                <div className="pt-3 sm:pt-4">
-                  <div className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-center font-bold text-sm sm:text-lg transition-all duration-300 bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 hover:scale-105 ${colors.buttonShadow}`}>
-                    {plan.popular ? 'Get Started' : 'Select Plan'}
+                  <div className={`inline-flex items-center gap-2 font-bold text-[#1557B0] bg-white px-3 py-1.5 rounded-xl shadow-sm`}> 
+                    <span>Get Now</span>
+                    <ChevronRight className="w-4 h-4" />
                   </div>
-              </div>
-              </div>
-
-              {/* Decorative Elements */}
-              <div className="absolute top-4 right-4 w-3 h-3 bg-white/30 rounded-full"></div>
-              <div className="absolute bottom-4 left-4 w-2 h-2 bg-white/20 rounded-full"></div>
-              
-              {/* Hover Arrow */}
-              <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <ChevronRight className="text-white" size={20} />
                 </div>
               </div>
-
-              {/* Bottom Border Accent */}
-              <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-b-3xl`}></div>
             </div>
           );
         })}

@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { AuthForm } from './components/auth/AuthForm';
 import { UserDashboard } from './components/user/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { initPWASessionManagement, debugStorage } from './utils/pwaUtils';
+import { initPWASessionManagement, debugStorage, clearAllAppDataAndCookies } from './utils/pwaUtils';
+import { supabase } from './utils/supabase';
 
 // Import auth debug utilities (available in console as window.authDebug)
 import './utils/authDebug';
@@ -26,14 +27,20 @@ if (typeof window !== 'undefined') {
 
 function AppContent() {
   const { user, authUser, isAdmin, loading, shouldShowLogin, sessionLoaded } = useAuth();
+  const [startupWaitExpired, setStartupWaitExpired] = useState(false);
 
-  // Show loading if session hasn't been checked yet OR if we're still loading
-  if (!sessionLoaded || (loading && !authUser)) {
+  useEffect(() => {
+    const t = setTimeout(() => setStartupWaitExpired(true), 8000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Show loading while waiting for initial session, but fail-safe after timeout
+  if ((!sessionLoaded && !startupWaitExpired) || ((loading && !authUser) && !startupWaitExpired)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-green-400 flex items-center justify-center">
+      <div className="min-h-screen bg-[#4285F4] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-          <div className="text-white text-xl">Loading StarNetX...</div>
+          <div className="text-white text-xl">Loading Starline Networks...</div>
         </div>
       </div>
     );
@@ -59,6 +66,13 @@ function App() {
     
     // Log PWA status
     console.log('PWA initialized. Debug with: window.pwaDebug()');
+
+    // Always sign out and clear app data on every load (refresh or hard navigation)
+    supabase.auth.signOut().catch(() => {}).finally(() => {
+      clearAllAppDataAndCookies().then(() => {
+        console.log('Auth signed out and app data cleared on load');
+      });
+    });
   }, []);
 
   return (

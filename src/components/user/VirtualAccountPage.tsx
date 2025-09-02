@@ -33,6 +33,16 @@ export const VirtualAccountPage: React.FC<VirtualAccountPageProps> = ({ onBack }
   const [error, setError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [stuck, setStuck] = useState(false);
+
+  const withTimeout = async <T,>(promise: Promise<T>, ms: number): Promise<T> => {
+    return new Promise<T>((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('timeout')), ms);
+      promise
+        .then((val) => { clearTimeout(t); resolve(val); })
+        .catch((err) => { clearTimeout(t); reject(err); });
+    });
+  };
 
   useEffect(() => {
     if (user) {
@@ -40,11 +50,26 @@ export const VirtualAccountPage: React.FC<VirtualAccountPageProps> = ({ onBack }
     }
   }, [user]);
 
+  // Watchdog: if stuck on loading for >8s, fall back to form with a notice
+  useEffect(() => {
+    if (step !== 'loading') return;
+    const t = setTimeout(() => {
+      setStuck(true);
+      setStep('form');
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [step]);
+
   const checkExistingAccount = async () => {
     if (!user) return;
     
     setStep('loading');
-    const existingAccount = await getUserVirtualAccount(user.id);
+    let existingAccount: any = null;
+    try {
+      existingAccount = await withTimeout(getUserVirtualAccount(user.id), 6000);
+    } catch (e) {
+      existingAccount = null;
+    }
     
     if (existingAccount) {
       setVirtualAccount({
@@ -182,6 +207,11 @@ export const VirtualAccountPage: React.FC<VirtualAccountPageProps> = ({ onBack }
 
         {step === 'form' && (
           <div className="space-y-6">
+            {stuck && (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-yellow-800 text-sm">
+                We couldn't fetch your existing virtual account right now. You can continue and create one below.
+              </div>
+            )}
             {/* Info Card */}
             <Card className="p-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
               <div className="flex items-start gap-4">
@@ -354,7 +384,7 @@ export const VirtualAccountPage: React.FC<VirtualAccountPageProps> = ({ onBack }
                     <p className="text-lg font-bold text-gray-900">
                       {(virtualAccount?.id && user?.firstName && user?.lastName)
                         ? `${user.firstName} ${user.lastName}`
-                        : `${formData.firstName} ${formData.lastName}`} - StarNetX
+                        : `${formData.firstName} ${formData.lastName}`} - Starline Networks
                     </p>
                   </div>
 

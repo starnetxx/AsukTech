@@ -114,7 +114,7 @@ export const ReferralPage: React.FC = () => {
     })();
   }, [user, allUsers, allPurchases]);
 
-  const [referralBaseUrl, setReferralBaseUrl] = useState<string>('https://starnetx.com/signup');
+  const [referralBaseUrl, setReferralBaseUrl] = useState<string>('https://starlinenetworks.com/signup');
   useEffect(() => {
     (async () => {
       try {
@@ -179,97 +179,87 @@ export const ReferralPage: React.FC = () => {
   return (
     <div className="space-y-8 min-h-[calc(100vh-400px)] max-[380px]:min-h-[calc(100vh-350px)] max-[360px]:min-h-[calc(100vh-320px)] max-[350px]:min-h-[calc(100vh-300px)]">
       {/* Hero Section */}
-      <div className="text-center space-y-4">
-        <div className="relative inline-block">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl">
-            <Share2 className="text-white" size={32} />
-          </div>
-          {/* Decorative elements */}
-          <div className="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse"></div>
-          <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full animate-pulse delay-1000"></div>
+      <div className="text-center space-y-3">
+        <div className="w-24 h-24 mx-auto mb-2">
+          <img src="/starline-logo.png" alt="Starline Networks" className="w-full h-full object-contain" />
         </div>
-        
-        <h1 className="text-4xl font-black text-gray-900 mb-3 bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
-          Invite Friends
+        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">
+          Refer & Earn
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-          Earn 10% commission on every purchase your referred friends make
+        <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto">
+          Earn 10% commission on every purchase your friends make.
         </p>
       </div>
 
       {/* Referral Code Card */}
-      <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-8 border border-blue-100 shadow-xl">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Referral Code</h2>
-          <p className="text-gray-600">Share this unique code with friends and family</p>
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Your Referral Code</h2>
+            <p className="text-gray-600">Share this unique code with friends and family</p>
+          </div>
+          <div className="bg-blue-50 px-4 py-3 rounded-2xl border border-blue-100">
+            <span className="text-[#3367D6] text-sm font-semibold">Minimum payout: ₦{minPayout}</span>
+          </div>
         </div>
-        
-        <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-white/50 shadow-lg mb-6">
-          <div className="flex items-center justify-between">
+
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm mb-5">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Referral Code</p>
-              <p className="text-3xl font-black text-transparent bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text">
-                {user?.referralCode}
-              </p>
+              <p className="text-xs text-gray-500">Referral Code</p>
+              <p className="text-3xl font-black text-[#1A73E8] tracking-wide">{user?.referralCode}</p>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={copyReferralCode}
-              className="flex items-center gap-2 bg-white border-2 border-blue-200 text-blue-700 font-semibold rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="flex items-center gap-2 bg-white border-2 border-blue-200 text-blue-700 font-semibold rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow"
             >
               <Copy size={16} />
               {copied ? 'Copied!' : 'Copy'}
             </Button>
           </div>
         </div>
-        
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 font-medium">Share this link:</p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={referralUrl}
-              readOnly
-              className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-2xl bg-white/80 backdrop-blur-sm text-sm font-medium focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-200 min-w-0"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={copyReferralCode}
-              className="px-6 py-3 bg-white border-2 border-blue-200 text-blue-700 font-semibold rounded-2xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 shadow-lg hover:shadow-xl whitespace-nowrap"
-            >
-              Copy Link
-            </Button>
-          </div>
-          
-          <div className="bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-2xl border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex-1">
-              <p className="text-sm text-emerald-800 font-semibold mb-1">
-                Referral earnings eligible for payout at ≥ ₦{minPayout}
-              </p>
-              <p className="text-lg text-emerald-900 font-bold">
-                Your earnings: ₦{myEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-            </div>
-            <Button 
-              onClick={requestPayout} 
-              disabled={!canRequestPayout || payoutRequesting}
-              className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-bold px-6 py-3 rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none disabled:cursor-not-allowed"
-            >
-              {payoutRequesting ? 'Requesting...' : 'Request Payout'}
-            </Button>
-          </div>
-          {payoutMessage && (
-            <div className="bg-green-100 border border-green-200 text-green-800 px-4 py-3 rounded-2xl text-sm font-medium">
-              {payoutMessage}
-            </div>
-          )}
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            value={referralUrl}
+            readOnly
+            className="flex-1 px-4 py-3 border border-gray-200 rounded-2xl bg-white text-sm font-medium focus:ring-2 focus:ring-[#4285F4]/30 focus:border-[#4285F4]/40 transition-all duration-200 min-w-0"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={copyReferralCode}
+            className="px-6 py-3 bg-[#4285F4] text-white font-semibold rounded-2xl hover:bg-[#3367D6] transition-all duration-200 shadow-sm hover:shadow whitespace-nowrap"
+          >
+            Copy Link
+          </Button>
         </div>
+
+        <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-sm text-blue-800 font-semibold">Your earnings</p>
+            <p className="text-xl text-[#1A73E8] font-black">₦{myEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          </div>
+          <Button 
+            onClick={requestPayout} 
+            disabled={!canRequestPayout || payoutRequesting}
+            className="w-full sm:w-auto bg-gradient-to-r from-[#4285F4] to-[#1A73E8] hover:from-[#3367D6] hover:to-[#1557B0] text-white font-bold px-6 py-3 rounded-2xl transition-all duration-200 shadow-sm hover:shadow"
+          >
+            {payoutRequesting ? 'Requesting...' : 'Request Payout'}
+          </Button>
+        </div>
+        {payoutMessage && (
+          <div className="mt-3 bg-blue-50 border border-blue-100 text-blue-800 px-4 py-3 rounded-2xl text-sm font-medium">
+            {payoutMessage}
+          </div>
+        )}
       </div>
 
       {/* Referral Statistics */}
-      <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-3xl p-8 border border-gray-100 shadow-xl">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-xl">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Referral Statistics</h2>
           <p className="text-gray-600">Track your referral success and earnings</p>
@@ -277,45 +267,45 @@ export const ReferralPage: React.FC = () => {
         
         {myReferrals.length > 0 ? (
           <div className="space-y-8">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl text-center text-white shadow-xl border border-blue-400/30">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 border-2 border-white/30">
-                  <Users className="text-white" size={28} />
+            <div className="grid grid-cols-2 gap-4 max-[450px]:gap-3">
+              <div className="bg-gradient-to-br from-[#4285F4] to-[#1A73E8] p-4 max-[450px]:p-3 rounded-2xl text-center text-white shadow-xl border border-white/10">
+                <div className="w-12 h-12 max-[450px]:w-10 max-[450px]:h-10 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-3 max-[450px]:mb-2 border-2 border-white/30">
+                  <Users className="text-white" size={24} />
                 </div>
-                <p className="text-4xl font-black mb-2 drop-shadow-lg">{myReferrals.length}</p>
-                <p className="text-blue-100 font-semibold">Total Referrals</p>
+                <p className="text-3xl max-[450px]:text-2xl font-black mb-2 max-[450px]:mb-1 drop-shadow-lg">{myReferrals.length}</p>
+                <p className="text-blue-100 font-semibold text-sm max-[450px]:text-xs">Total Referrals</p>
               </div>
-              <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-6 rounded-2xl text-center text-white shadow-xl border border-emerald-400/30">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 border-2 border-white/30">
-                  <DollarSign className="text-white" size={28} />
+              <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-4 max-[450px]:p-3 rounded-2xl text-center text-white shadow-xl border border-white/10">
+                <div className="w-12 h-12 max-[450px]:w-10 max-[450px]:h-10 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-3 max-[450px]:mb-2 border-2 border-white/30">
+                  <DollarSign className="text-white" size={24} />
                 </div>
-                <p className="text-4xl font-black mb-2 drop-shadow-lg">₦{myEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                <p className="text-emerald-100 font-semibold">Total Earnings</p>
+                <p className="text-3xl max-[450px]:text-2xl font-black mb-2 max-[450px]:mb-1 drop-shadow-lg">₦{myEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-emerald-100 font-semibold text-sm max-[450px]:text-xs">Total Earnings</p>
               </div>
             </div>
             
             <div>
-              <h3 className="font-bold text-xl text-gray-900 mb-4 flex items-center gap-2">
+              <h3 className="font-bold text-xl max-[450px]:text-lg text-gray-900 mb-4 max-[450px]:mb-3 flex items-center gap-2">
                 <TrendingUp className="text-blue-600" size={24} />
                 Your Referrals
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-3 max-[450px]:space-y-2">
                 {myReferrals.map((referredUser) => {
                   const userPurchases = allPurchases.filter(p => p.userId === referredUser.id);
                   const userEarnings = userPurchases.reduce((total, purchase) => total + (purchase.amount * 0.1), 0);
                   
                   return (
-                    <div key={referredUser.id} className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-white/50 shadow-lg hover:shadow-xl transition-all duration-200">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-bold text-gray-900">{referredUser.email}</p>
-                          <p className="text-sm text-gray-600">
+                    <div key={referredUser.id} className="bg-white p-4 max-[450px]:p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
+                      <div className="flex justify-between items-center max-[450px]:flex-col max-[450px]:items-start max-[450px]:gap-2">
+                        <div className="max-[450px]:w-full">
+                          <p className="font-bold text-gray-900 text-sm max-[450px]:text-xs truncate">{referredUser.email}</p>
+                          <p className="text-sm max-[450px]:text-xs text-gray-600">
                             Joined {new Date(referredUser.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-2xl text-emerald-600">₦{userEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                          <p className="text-sm text-gray-600">{userPurchases.length} purchases</p>
+                        <div className="text-right max-[450px]:text-left max-[450px]:w-full max-[450px]:flex max-[450px]:justify-between max-[450px]:items-center">
+                          <p className="font-bold text-xl max-[450px]:text-lg text-emerald-600">₦{userEarnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                          <p className="text-sm max-[450px]:text-xs text-gray-600">{userPurchases.length} purchases</p>
                         </div>
                       </div>
                     </div>
@@ -343,38 +333,43 @@ export const ReferralPage: React.FC = () => {
       </div>
 
       {/* How it Works */}
-      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-8 border border-purple-100 shadow-xl">
-        <div className="text-center mb-8">
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-xl">
+        <div className="text-center mb-6 sm:mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">How it Works</h2>
           <p className="text-gray-600">Simple steps to start earning with referrals</p>
         </div>
         
-        <div className="space-y-6">
-          <div className="flex gap-6 items-start">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center text-white text-lg font-black shadow-lg border-2 border-white/30">
+        <div className="space-y-4">
+          {/* Step 1 */}
+          <div className="flex gap-4 items-start p-4 rounded-2xl border border-gray-100 bg-gray-50/60">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-extrabold bg-gradient-to-br from-[#4285F4] to-[#1A73E8] shadow-sm">
               1
             </div>
             <div className="flex-1">
-              <p className="font-bold text-lg text-gray-900 mb-2">{howItWorks.step1Title}</p>
-              <p className="text-gray-600 leading-relaxed">{howItWorks.step1Desc}</p>
+              <p className="font-bold text-gray-900 leading-tight">{howItWorks.step1Title}</p>
+              <p className="text-gray-600 text-sm mt-1">{howItWorks.step1Desc}</p>
             </div>
           </div>
-          <div className="flex gap-6 items-start">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-lg font-black shadow-lg border-2 border-white/30">
+
+          {/* Step 2 */}
+          <div className="flex gap-4 items-start p-4 rounded-2xl border border-gray-100 bg-gray-50/60">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-extrabold bg-gradient-to-br from-[#4285F4] to-[#1A73E8] shadow-sm">
               2
             </div>
             <div className="flex-1">
-              <p className="font-bold text-lg text-gray-900 mb-2">{howItWorks.step2Title}</p>
-              <p className="text-gray-600 leading-relaxed">{howItWorks.step2Desc}</p>
+              <p className="font-bold text-gray-900 leading-tight">{howItWorks.step2Title}</p>
+              <p className="text-gray-600 text-sm mt-1">{howItWorks.step2Desc}</p>
             </div>
           </div>
-          <div className="flex gap-6 items-start">
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center text-white text-lg font-black shadow-lg border-2 border-white/30">
+
+          {/* Step 3 */}
+          <div className="flex gap-4 items-start p-4 rounded-2xl border border-gray-100 bg-gray-50/60">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-extrabold bg-gradient-to-br from-[#4285F4] to-[#1A73E8] shadow-sm">
               3
             </div>
             <div className="flex-1">
-              <p className="font-bold text-lg text-gray-900 mb-2">{howItWorks.step3Title}</p>
-              <p className="text-gray-600 leading-relaxed">{howItWorks.step3Desc}</p>
+              <p className="font-bold text-gray-900 leading-tight">{howItWorks.step3Title}</p>
+              <p className="text-gray-600 text-sm mt-1">{howItWorks.step3Desc}</p>
             </div>
           </div>
         </div>

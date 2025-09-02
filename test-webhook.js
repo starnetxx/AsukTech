@@ -20,7 +20,7 @@ const testPayload ={
   "data": {
     "payment_type": "bank_transfer",
     "status": "successful",
-    "tx_ref": "starnetx-1754954718951-985",
+    "tx_ref": "starlinenetworks-1754954718951-985",
     "flw_ref": "100004250811235820138822790790",
     "amount": 100,
     "currency": "NGN",

@@ -47,42 +47,33 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
 
   if (recentTransactions.length === 0) {
     return (
-      <Card className="p-6 mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-0">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <TrendingUp className="text-white" size={28} />
-          </div>
-          <h3 className="font-bold text-gray-900 mb-2 text-lg">Start Your Journey</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            Purchase your first plan to see your transaction history and start enjoying high-speed internet. View all transactions in Settings.
-          </p>
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-gradient-to-br from-[#4285F4] to-[#1A73E8] rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+          <TrendingUp className="text-white" size={28} />
         </div>
-      </Card>
+        <h4 className="font-bold text-gray-900 mb-2 text-lg">Start Your Journey</h4>
+        <p className="text-sm text-gray-600 leading-relaxed max-w-sm mx-auto">
+          Purchase your first plan to see your transaction history and start enjoying high-speed internet.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card className="p-0 mb-6 bg-white border-0 shadow-lg">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 sm:p-6 rounded-t-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <Clock className="text-white" size={16} />
-            </div>
-            <div>
-              <h3 className="font-bold text-white text-base sm:text-lg">Recent Activity</h3>
-              <p className="text-blue-100 text-xs sm:text-sm">Your latest transactions</p>
-            </div>
-          </div>
-          <span className="bg-white/20 text-white text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-medium">
-            {recentTransactions.length} recent
+    <div className="space-y-4">
+      {/* Activity Badge */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span className="text-xs text-gray-600 font-medium">
+            {recentTransactions.length} recent transaction{recentTransactions.length !== 1 ? 's' : ''}
           </span>
         </div>
+        <span className="text-xs text-gray-500">Last 30 days</span>
       </div>
 
       {/* Transactions List */}
-      <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
+      <div className="space-y-3">
         {recentTransactions.map((transaction, index) => {
           const plan = plans.find(p => p.id === transaction.planId);
           const location = locations.find(l => l.id === transaction.locationId);
@@ -91,60 +82,62 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
           return (
             <div 
               key={transaction.id} 
-              className="group relative bg-gradient-to-r from-gray-50 to-blue-50 hover:from-blue-50 hover:to-indigo-50 p-3 sm:p-4 rounded-xl border border-gray-100 hover:border-blue-200 transition-all duration-300 hover:shadow-md"
+              className="group relative bg-gray-50 hover:bg-blue-50 p-4 rounded-2xl border border-gray-100 hover:border-[#4285F4]/20 transition-all duration-300 hover:shadow-sm max-[450px]:p-3 max-[340px]:p-2.5"
             >
-              {/* Status indicator line */}
-              <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-xl ${
+              {/* Status indicator dot */}
+              <div className={`absolute left-4 top-4 w-3 h-3 rounded-full ${
                 transaction.status === 'active' ? 'bg-green-500' : 
                 transaction.status === 'expired' ? 'bg-red-500' : 'bg-yellow-500'
               }`} />
               
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-start sm:items-center gap-3 sm:gap-4">
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0 ${
-                    transaction.status === 'active' ? 'bg-green-100' : 
-                    transaction.status === 'expired' ? 'bg-red-100' : 'bg-yellow-100'
-                  }`}>
-                    <Wifi className={
-                      transaction.status === 'active' ? 'text-green-600' : 
-                      transaction.status === 'expired' ? 'text-red-600' : 'text-yellow-600'
-                    } size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-sm sm:text-base truncate">
-                      {plan?.name || 'Unknown Plan'}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs text-gray-600 mt-1">
-                      <div className="flex items-center gap-1">
-                        <MapPin size={12} />
-                        <span className="truncate max-w-[100px] sm:max-w-none">{location?.name || 'Unknown'}</span>
-                      </div>
-                      <span className="text-gray-400 hidden sm:inline">•</span>
-                      <span className="text-[10px] sm:text-[11px] text-gray-500">
-                        {purchaseDate.toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric'
-                        })}, {purchaseDate.toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
+              <div className="ml-6 flex items-center justify-between max-[450px]:ml-5 max-[450px]:flex-col max-[450px]:items-start max-[450px]:gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-3 mb-2 max-[450px]:space-x-2 max-[450px]:mb-1.5">
+                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 ${
+                      transaction.status === 'active' ? 'bg-green-100' : 
+                      transaction.status === 'expired' ? 'bg-red-100' : 'bg-yellow-100'
+                    } max-[450px]:w-9 max-[450px]:h-9`}>
+                      <Wifi className={
+                        transaction.status === 'active' ? 'text-green-600' : 
+                        transaction.status === 'expired' ? 'text-red-600' : 'text-yellow-600'
+                      } size={14} />
                     </div>
-                    {transaction.status === 'active' && transaction.mikrotikCredentials && (
-                      <div className="mt-1">
-                        <span className="text-[10px] sm:text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 sm:py-1 rounded-md inline-block">
-                          User: {transaction.mikrotikCredentials.username}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm truncate max-[450px]:text-[13px] max-[340px]:text-[12px]">
+                        {plan?.name || 'Unknown Plan'}
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1 max-[450px]:text-[11px]">
+                        <div className="flex items-center space-x-1">
+                          <MapPin size={9} />
+                          <span className="truncate">{location?.name || 'Unknown'}</span>
+                        </div>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-gray-500">
+                          {purchaseDate.toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric'
+                          })}, {purchaseDate.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
                       </div>
-                    )}
+                      {transaction.status === 'active' && transaction.mikrotikCredentials && (
+                        <div className="mt-2 max-[340px]:mt-1.5">
+                          <span className="text-xs text-[#4285F4] font-medium bg-blue-50 px-2 py-1 rounded-lg inline-block max-[340px]:text-[11px] max-[340px]:px-1.5 max-[340px]:py-0.5">
+                            User: {transaction.mikrotikCredentials.username}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between sm:block sm:text-right">
-                  <span className={`text-[10px] sm:text-xs px-2 sm:px-3 py-0.5 sm:py-1 rounded-full font-bold ${getStatusColor(transaction.status)}`}>
+                <div className="text-right max-[450px]:w-full max-[450px]:flex max-[450px]:items-center max-[450px]:justify-between">
+                  <span className={`text-xs px-3 py-1 rounded-full font-bold ${getStatusColor(transaction.status)} max-[450px]:text-[11px] max-[450px]:px-2.5 max-[450px]:py-0.5`}>
                     {getStatusText(transaction.status)}
                   </span>
-                  <p className="text-base sm:text-lg font-bold text-gray-900 sm:mt-2">
+                  <p className="text-lg font-bold text-gray-900 mt-1 max-[450px]:text-base">
                     ₦{transaction.amount.toLocaleString()}
                   </p>
                 </div>
@@ -154,18 +147,18 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
         })}
       </div>
       
-      {/* Footer */}
+      {/* View All Button */}
       {recentTransactions.length > 0 && (
-        <div className="px-6 pb-6">
+        <div className="pt-4 border-t border-gray-100">
           <button 
             onClick={onNavigateToHistory}
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white p-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg flex items-center justify-center gap-2 group"
+            className="w-full bg-gradient-to-r from-[#4285F4] to-[#1A73E8] hover:from-[#3367D6] hover:to-[#1557B0] text-white p-3 rounded-2xl font-semibold transition-all duration-300 hover:shadow-lg flex items-center justify-center space-x-2 group"
           >
-            <span>View All Transactions in Settings</span>
+            <span>View All Transactions</span>
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       )}
-    </Card>
+    </div>
   );
 };

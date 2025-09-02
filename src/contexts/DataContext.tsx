@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import { Plan, Location, Transaction, CredentialPool, Purchase, Credential } from '../types';
+import { useCallback } from 'react';
 
 interface DataContextType {
   plans: Plan[];
@@ -45,83 +46,232 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [initialLoadStarted, setInitialLoadStarted] = useState(false);
   const [lastDataRefresh, setLastDataRefresh] = useState<number>(0);
 
-  useEffect(() => {
-    loadInitialData();
+  // Helper functions
+  const mapTransactionStatusToPurchaseStatus = (status: string | null, expiryDate: string): 'active' | 'expired' | 'used' | 'pending' => {
+    if (status === 'pending') return 'pending';
+    if (status === 'failed') return 'expired';
+    if (status === 'completed') {
+      if (expiryDate && new Date(expiryDate) < new Date()) {
+        return 'expired';
+      }
+      return 'active';
+    }
+    return 'pending';
+  };
+
+  const mapPlanIdToPlanType = useCallback((planId: string): '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom' => {
+    // Handle legacy rows where plan_id stored the type string
+    const legacyTypes = ['3-hour', 'daily', 'weekly', 'monthly', 'custom'] as const;
+    if ((legacyTypes as readonly string[]).includes(planId)) {
+      return planId as '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom';
+    }
+    const plan = plans.find(p => p.id === planId);
+    if (!plan) return '3-hour';
+    return plan.type;
+  }, [plans]);
+
+  const loadPlans = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('order', { ascending: true })
+        .order('price', { ascending: true }); // Fallback sorting by price if order is null
+
+      if (error) {
+        console.error('Error loading plans:', error);
+        // Don't retry here, let the main loadInitialData handle retries
+        return;
+      }
+
+      const formattedPlans: Plan[] = data.map(plan => ({
+        id: plan.id,
+        name: plan.name,
+        duration: plan.duration || `${plan.duration_hours} Hours`,
+        durationHours: plan.duration_hours,
+        price: plan.price,
+        dataAmount: plan.data_amount || 'Unlimited',
+        type: plan.type,
+        popular: plan.popular,
+        isUnlimited: plan.is_unlimited,
+        isActive: plan.is_active,
+        order: plan.order || 0, // Default to 0 if order is null
+        createdAt: plan.created_at,
+        updatedAt: plan.updated_at,
+      }));
+
+      setPlans(formattedPlans);
+    } catch (error) {
+      console.error('Error loading plans:', error);
+      // Don't retry here, let the main loadInitialData handle retries
+    }
   }, []);
 
-  // Handle app visibility changes and sync requests
-  useEffect(() => {
-    const handleVisibilityChange = (event: CustomEvent) => {
-      if (event.detail?.visible) {
-        const timeSinceLastRefresh = Date.now() - lastDataRefresh;
-        // If data is older than 5 minutes, refresh it
-        if (timeSinceLastRefresh > 5 * 60 * 1000) {
-          console.log('App became visible, refreshing stale data...');
-          refreshData();
-        }
+  const loadLocations = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error loading locations:', error);
+        return;
       }
-    };
 
-    const handleSyncData = () => {
-      console.log('Service worker requested data sync');
-      refreshData();
-    };
+      const formattedLocations: Location[] = data.map(location => ({
+        id: location.id,
+        name: location.name,
+        wifiName: location.wifi_name,
+        isActive: location.is_active,
+        createdAt: location.created_at,
+        updatedAt: location.updated_at,
+      }));
 
-    const handleOnlineStatusChange = (event: CustomEvent) => {
-      if (event.detail?.online) {
-        console.log('App came online, refreshing data...');
-        refreshData();
-      }
-    };
+      setLocations(formattedLocations);
+    } catch (error) {
+      console.error('Error loading locations:', error);
+    }
+  }, []);
 
-    window.addEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
-    window.addEventListener('sw-sync-data', handleSyncData);
-    window.addEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
+  const loadPurchases = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('type', 'plan_purchase')
+        .order('created_at', { ascending: false });
 
-    return () => {
-      window.removeEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
-      window.removeEventListener('sw-sync-data', handleSyncData);
-      window.removeEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
-    };
-  }, [lastDataRefresh]);
-
-  // After auth login, reload user-scoped data so UI reflects purchases without manual refresh
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('DataContext: Auth state changed:', event);
-      
-      // Only reload data on actual sign in, not on initial session or token refresh
-      if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          setUserDataLoading(true);
-          console.log('User signed in, reloading user data...');
-          // Reload all user data
-          await Promise.all([
-            loadPurchases(), 
-            loadCredentials(),
-            loadTransactions()
-          ]);
-        } catch (e) {
-          console.error('Error reloading data after login:', e);
-        } finally {
-          setUserDataLoading(false);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        // On logout, clear user-scoped data
-        console.log('User signed out, clearing data...');
+      if (error) {
+        console.error('Error loading purchases:', error);
+        // Don't let this error block the UI
         setPurchases([]);
-        setCredentials([]);
-        setTransactions([]);
-        setUserDataLoading(false);
+        return;
       }
-    });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+      const formattedPurchases: Purchase[] = data.map(transaction => {
+        const expiryDate = transaction.expires_at || '';
+        const mikrotikCredentials = {
+          username: transaction.mikrotik_username || '',
+          password: transaction.mikrotik_password || '',
+        };
+
+        return {
+          id: transaction.id,
+          userId: transaction.user_id,
+          planId: transaction.plan_id || '',
+          locationId: transaction.location_id || '',
+          amount: transaction.amount,
+          type: transaction.type,
+          purchaseDate: transaction.purchase_date || transaction.created_at,
+          expiryDate,
+          activationDate: transaction.activation_date,
+          credentialId: transaction.credential_id,
+          mikrotikCredentials,
+          mikrotikUsername: transaction.mikrotik_username,
+          mikrotikPassword: transaction.mikrotik_password,
+          expiresAt: transaction.expires_at,
+          status: mapTransactionStatusToPurchaseStatus(transaction.status, expiryDate),
+          createdAt: transaction.created_at,
+          updatedAt: transaction.updated_at,
+        };
+      });
+
+      setPurchases(formattedPurchases);
+    } catch (error) {
+      console.error('Error loading purchases:', error);
+    }
   }, []);
 
-  const loadInitialData = async () => {
+  const loadTransactions = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading transactions:', error);
+        setTransactions([]);
+        return;
+      }
+
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      setTransactions([]);
+    }
+  }, []);
+
+  const loadCredentials = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('credential_pools')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading credentials:', error);
+        // Don't let this error block the UI
+        setCredentials([]);
+        return;
+      }
+
+      const formattedCredentials: Credential[] = data.map(cred => ({
+        id: cred.id,
+        username: cred.username,
+        password: cred.password,
+        locationId: cred.location_id,
+        planId: String(cred.plan_id),
+        planType: mapPlanIdToPlanType(String(cred.plan_id)),
+        status: cred.status === 'used' ? 'used' : 'available',
+        assignedTo: cred.assigned_to,
+        assignedUserId: cred.assigned_to,
+        assignedAt: cred.assigned_at,
+        assignedDate: cred.assigned_at,
+        createdAt: cred.created_at,
+        updatedAt: cred.updated_at,
+      }));
+
+      setCredentials(formattedCredentials);
+    } catch (error) {
+      console.error('Error loading credentials:', error);
+    }
+  }, [mapPlanIdToPlanType]);
+
+  const refreshData = useCallback(async () => {
+    // Force a fresh load of all data
+    console.log('Refreshing all data at', new Date().toISOString());
+    setLoading(true);
+    try {
+      // Load public data
+      await Promise.all([
+        loadPlans(),
+        loadLocations()
+      ]);
+      
+      // Load user data if authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await Promise.all([
+          loadPurchases(),
+          loadCredentials(),
+          loadTransactions()
+        ]);
+      }
+      
+      // Update last refresh timestamp
+      setLastDataRefresh(Date.now());
+      console.log('Data refresh completed successfully');
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadPlans, loadLocations, loadPurchases, loadCredentials, loadTransactions]);
+
+  const loadInitialData = useCallback(async () => {
     // Prevent multiple simultaneous initial loads
     if (initialLoadStarted) {
       console.log('Initial load already started, skipping...');
@@ -176,201 +326,83 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  };
+  }, [initialLoadStarted, loadPlans, loadLocations, loadPurchases, loadCredentials, loadTransactions]);
 
-  const loadPlans = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('plans')
-        .select('*')
-        .eq('is_active', true)
-        .order('order', { ascending: true })
-        .order('price', { ascending: true }); // Fallback sorting by price if order is null
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
-      if (error) {
-        console.error('Error loading plans:', error);
-        // Don't retry here, let the main loadInitialData handle retries
-        return;
+  // Handle app visibility changes and sync requests
+  useEffect(() => {
+    const handleVisibilityChange = (event: CustomEvent) => {
+      if (event.detail?.visible) {
+        const timeSinceLastRefresh = Date.now() - lastDataRefresh;
+        // If data is older than 5 minutes, refresh it
+        if (timeSinceLastRefresh > 5 * 60 * 1000) {
+          console.log('App became visible, refreshing stale data...');
+          refreshData();
+        }
       }
+    };
 
-      const formattedPlans: Plan[] = data.map(plan => ({
-        id: plan.id,
-        name: plan.name,
-        duration: plan.duration || `${plan.duration_hours} Hours`,
-        durationHours: plan.duration_hours,
-        price: plan.price,
-        dataAmount: plan.data_amount || 'Unlimited',
-        type: plan.type,
-        popular: plan.popular,
-        isUnlimited: plan.is_unlimited,
-        isActive: plan.is_active,
-        order: plan.order || 0, // Default to 0 if order is null
-        createdAt: plan.created_at,
-        updatedAt: plan.updated_at,
-      }));
+    const handleSyncData = () => {
+      console.log('Service worker requested data sync');
+      refreshData();
+    };
 
-      setPlans(formattedPlans);
-    } catch (error) {
-      console.error('Error loading plans:', error);
-      // Don't retry here, let the main loadInitialData handle retries
-    }
-  };
-
-  const loadLocations = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('locations')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) {
-        console.error('Error loading locations:', error);
-        return;
+    const handleOnlineStatusChange = (event: CustomEvent) => {
+      if (event.detail?.online) {
+        console.log('App came online, refreshing data...');
+        refreshData();
       }
+    };
 
-      const formattedLocations: Location[] = data.map(location => ({
-        id: location.id,
-        name: location.name,
-        wifiName: location.wifi_name,
-        isActive: location.is_active,
-        createdAt: location.created_at,
-        updatedAt: location.updated_at,
-      }));
+    window.addEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
+    window.addEventListener('sw-sync-data', handleSyncData);
+    window.addEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
 
-      setLocations(formattedLocations);
-    } catch (error) {
-      console.error('Error loading locations:', error);
-    }
-  };
+    return () => {
+      window.removeEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
+      window.removeEventListener('sw-sync-data', handleSyncData);
+      window.removeEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
+    };
+  }, [lastDataRefresh, refreshData]);
 
-  const loadPurchases = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('type', 'plan_purchase')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading purchases:', error);
-        // Don't let this error block the UI
+  // After auth login, reload user-scoped data so UI reflects purchases without manual refresh
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('DataContext: Auth state changed:', event);
+      
+      // Only reload data on actual sign in, not on initial session or token refresh
+      if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          setUserDataLoading(true);
+          console.log('User signed in, reloading user data...');
+          // Reload all user data
+          await Promise.all([
+            loadPurchases(), 
+            loadCredentials(),
+            loadTransactions()
+          ]);
+        } catch (e) {
+          console.error('Error reloading data after login:', e);
+        } finally {
+          setUserDataLoading(false);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // On logout, clear user-scoped data
+        console.log('User signed out, clearing data...');
         setPurchases([]);
-        return;
-      }
-
-      const formattedPurchases: Purchase[] = data.map(transaction => {
-        const expiryDate = transaction.expires_at || '';
-        const mikrotikCredentials = {
-          username: transaction.mikrotik_username || '',
-          password: transaction.mikrotik_password || '',
-        };
-
-        return {
-          id: transaction.id,
-          userId: transaction.user_id,
-          planId: transaction.plan_id || '',
-          locationId: transaction.location_id || '',
-          amount: transaction.amount,
-          type: transaction.type,
-          purchaseDate: transaction.purchase_date || transaction.created_at,
-          expiryDate,
-          activationDate: transaction.activation_date,
-          credentialId: transaction.credential_id,
-          mikrotikCredentials,
-          mikrotikUsername: transaction.mikrotik_username,
-          mikrotikPassword: transaction.mikrotik_password,
-          expiresAt: transaction.expires_at,
-          status: mapTransactionStatusToPurchaseStatus(transaction.status, expiryDate),
-          createdAt: transaction.created_at,
-          updatedAt: transaction.updated_at,
-        };
-      });
-
-      setPurchases(formattedPurchases);
-    } catch (error) {
-      console.error('Error loading purchases:', error);
-    }
-  };
-
-  const loadTransactions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading transactions:', error);
-        setTransactions([]);
-        return;
-      }
-
-      setTransactions(data || []);
-    } catch (error) {
-      console.error('Error loading transactions:', error);
-      setTransactions([]);
-    }
-  };
-
-  const loadCredentials = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('credential_pools')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading credentials:', error);
-        // Don't let this error block the UI
         setCredentials([]);
-        return;
+        setTransactions([]);
+        setUserDataLoading(false);
       }
+    });
 
-      const formattedCredentials: Credential[] = data.map(cred => ({
-        id: cred.id,
-        username: cred.username,
-        password: cred.password,
-        locationId: cred.location_id,
-        planId: String(cred.plan_id),
-        planType: mapPlanIdToPlanType(String(cred.plan_id)),
-        status: cred.status === 'used' ? 'used' : 'available',
-        assignedTo: cred.assigned_to,
-        assignedUserId: cred.assigned_to,
-        assignedAt: cred.assigned_at,
-        assignedDate: cred.assigned_at,
-        createdAt: cred.created_at,
-        updatedAt: cred.updated_at,
-      }));
-
-      setCredentials(formattedCredentials);
-    } catch (error) {
-      console.error('Error loading credentials:', error);
-    }
-  };
-
-  // Helper functions
-  const mapTransactionStatusToPurchaseStatus = (status: string | null, expiryDate: string): 'active' | 'expired' | 'used' | 'pending' => {
-    if (status === 'pending') return 'pending';
-    if (status === 'failed') return 'expired';
-    if (status === 'completed') {
-      if (expiryDate && new Date(expiryDate) < new Date()) {
-        return 'expired';
-      }
-      return 'active';
-    }
-    return 'pending';
-  };
-
-  const mapPlanIdToPlanType = (planId: string): '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom' => {
-    // Handle legacy rows where plan_id stored the type string
-    const legacyTypes = ['3-hour', 'daily', 'weekly', 'monthly', 'custom'] as const;
-    if ((legacyTypes as readonly string[]).includes(planId)) {
-      return planId as '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom';
-    }
-    const plan = plans.find(p => p.id === planId);
-    if (!plan) return '3-hour';
-    return plan.type;
-  };
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [loadPurchases, loadCredentials, loadTransactions]);
 
   // Plan management
   const addPlan = async (planData: Omit<Plan, 'id' | 'createdAt' | 'updatedAt'>) => {

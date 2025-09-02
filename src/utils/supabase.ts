@@ -7,19 +7,41 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file.')
 }
 
+// Backward compatibility: seamlessly read old auth key while migrating to new key
+const NEW_STORAGE_KEY = 'sb-starline-auth-token';
+const OLD_STORAGE_KEY = 'sb-starnetx-auth-token';
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true, // Enable session persistence
-    autoRefreshToken: true, // Enable auto-refresh
+    autoRefreshToken: false, // Disable auto-refresh to force short sessions
     detectSessionInUrl: true,
-    storageKey: 'sb-starnetx-auth-token', // Use standard Supabase prefix
+    storageKey: NEW_STORAGE_KEY, // new standard prefix
     storage: {
       // Use default localStorage with minimal interference
       getItem: (key: string) => {
-        return localStorage.getItem(key);
+        // If the new key is requested but not present, fall back to old key once
+        const value = localStorage.getItem(key);
+        if (!value && key === NEW_STORAGE_KEY) {
+          const legacy = localStorage.getItem(OLD_STORAGE_KEY);
+          if (legacy) {
+            try {
+              // Copy forward to new key without deleting legacy
+              localStorage.setItem(NEW_STORAGE_KEY, legacy);
+              return legacy;
+            } catch {
+              return legacy;
+            }
+          }
+        }
+        return value;
       },
       setItem: (key: string, value: string) => {
         localStorage.setItem(key, value);
+        // Optionally clean up legacy key if we just wrote the new one
+        if (key === NEW_STORAGE_KEY) {
+          try { localStorage.removeItem(OLD_STORAGE_KEY); } catch {}
+        }
       },
       removeItem: (key: string) => {
         localStorage.removeItem(key);
@@ -33,7 +55,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': 'starnetx-pwa',
+      'X-Client-Info': 'starline-networks-pwa',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache'
     },

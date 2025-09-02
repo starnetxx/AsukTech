@@ -60,8 +60,8 @@ class SessionManager {
       console.error('Error signing out:', error);
     }
 
-    // Save remember me credentials before clearing
-    const rememberMeData = localStorage.getItem('starnetx_auth_data');
+    // Save remember me credentials before clearing (support legacy and new)
+    const rememberMeData = localStorage.getItem('starline_auth_data') || localStorage.getItem('starnetx_auth_data');
     
     // Clear all auth-related storage (except remember me)
     const keysToRemove: string[] = [];
@@ -69,7 +69,7 @@ class SessionManager {
     // Clear localStorage (except remember me)
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key !== 'starnetx_auth_data' && (key.includes('supabase') || key.includes('auth') || key.includes('sb-') || key.includes('starnetx'))) {
+      if (key && key !== 'starline_auth_data' && key !== 'starnetx_auth_data' && (key.includes('supabase') || key.includes('auth') || key.includes('sb-') || key.includes('starnetx') || key.includes('starline'))) {
         keysToRemove.push(key);
       }
     }
@@ -77,7 +77,9 @@ class SessionManager {
     
     // Restore remember me credentials if they existed
     if (rememberMeData) {
-      localStorage.setItem('starnetx_auth_data', rememberMeData);
+      // Write to new key and remove legacy to avoid duplication
+      localStorage.setItem('starline_auth_data', rememberMeData);
+      try { localStorage.removeItem('starnetx_auth_data'); } catch {}
     }
 
     // Clear sessionStorage

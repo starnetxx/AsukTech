@@ -58,7 +58,7 @@ export const AdminDashboard: React.FC = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">StarNetX Admin</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Starline Networks Admin</h1>
             <Button variant="outline" onClick={logout}>
               Sign Out
             </Button>

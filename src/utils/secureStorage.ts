@@ -2,11 +2,12 @@
 // Note: This is basic obfuscation, not true encryption
 // For production, consider using Web Crypto API or a proper encryption library
 
-const STORAGE_KEY = 'starnetx_auth_data';
+const NEW_STORAGE_KEY = 'starline_auth_data';
+const OLD_STORAGE_KEY = 'starnetx_auth_data';
 
 // Simple XOR cipher for basic obfuscation
 const obfuscate = (text: string): string => {
-  const key = 'StarNetX2024SecureKey';
+  const key = 'StarlineNetworks2024SecureKey';
   let result = '';
   for (let i = 0; i < text.length; i++) {
     result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
@@ -16,7 +17,7 @@ const obfuscate = (text: string): string => {
 
 const deobfuscate = (encoded: string): string => {
   try {
-    const key = 'StarNetX2024SecureKey';
+    const key = 'StarlineNetworks2024SecureKey';
     const text = atob(encoded); // Base64 decode
     let result = '';
     for (let i = 0; i < text.length; i++) {
@@ -37,15 +38,23 @@ export const secureStorage = {
         rememberMe: true,
         timestamp: Date.now()
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(NEW_STORAGE_KEY, JSON.stringify(data));
     } else {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(NEW_STORAGE_KEY);
     }
   },
 
   getCredentials: () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      // Prefer new key; fall back to legacy and migrate forward
+      let stored = localStorage.getItem(NEW_STORAGE_KEY);
+      if (!stored) {
+        const legacy = localStorage.getItem(OLD_STORAGE_KEY);
+        if (legacy) {
+          try { localStorage.setItem(NEW_STORAGE_KEY, legacy); } catch {}
+          stored = legacy;
+        }
+      }
       if (!stored) return null;
       
       const data = JSON.parse(stored);
@@ -53,7 +62,7 @@ export const secureStorage = {
       // Check if credentials are older than 30 days
       const thirtyDays = 30 * 24 * 60 * 60 * 1000;
       if (Date.now() - data.timestamp > thirtyDays) {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(NEW_STORAGE_KEY);
         return null;
       }
       
@@ -68,6 +77,6 @@ export const secureStorage = {
   },
 
   clearCredentials: () => {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(NEW_STORAGE_KEY);
   }
 };

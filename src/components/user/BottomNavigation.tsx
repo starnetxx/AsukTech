@@ -20,55 +20,33 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   ];
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 pointer-events-none transform-gpu max-[380px]:bottom-3 max-[360px]:bottom-2 max-[350px]:bottom-1">
-      <div className="w-[92%] mx-auto pointer-events-auto max-[380px]:w-[94%] max-[360px]:w-[96%] max-[350px]:w-[98%]">
-        {/* Main Navigation Container */}
-        <div className="bg-white/90 backdrop-blur-xl rounded-2xl min-[360px]:rounded-3xl shadow-2xl border border-gray-100/50 px-2 py-3 min-[360px]:px-3 min-[360px]:py-4 relative will-change-transform">
-          {/* Navigation Items */}
-          <div className="flex">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activePage === item.id;
-              
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onPageChange(item.id)}
-                  className={`flex-1 flex flex-col items-center py-2 min-[360px]:py-3 px-1 min-[360px]:px-2 rounded-xl min-[360px]:rounded-2xl transition-all duration-200 relative group ${
-                    isActive
-                      ? 'text-white'
-                      : 'text-gray-600 hover:text-gray-800'
-                  }`}
-                >
-                  {/* Active Background */}
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-1px_8px_rgba(0,0,0,0.04)]">
+      <div className="max-w-md mx-auto px-2 py-2">
+        <div className="flex">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activePage === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onPageChange(item.id)}
+                className={`flex-1 flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
+                  isActive ? 'text-[#4285F4]' : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <div className="relative flex items-center justify-center w-10 h-10">
+                  <Icon size={22} />
                   {isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl min-[360px]:rounded-2xl shadow-lg"></div>
+                    <span className="absolute -bottom-1 w-6 h-1 rounded-full bg-[#4285F4]"></span>
                   )}
-                  
-                  {/* Icon Container */}
-                  <div className={`relative z-10 flex items-center justify-center w-10 h-10 min-[360px]:w-12 min-[360px]:h-12 rounded-xl min-[360px]:rounded-2xl transition-all duration-200 ${
-                    isActive
-                      ? 'bg-white/20 backdrop-blur-sm'
-                      : 'bg-gray-100/60 hover:bg-gray-200/80'
-                  }`}>
-                    <Icon 
-                      size={20} 
-                      className="transition-all duration-200 min-[360px]:w-6 min-[360px]:h-6"
-                    />
-                  </div>
-                  
-                  {/* Label */}
-                  <span className="text-[10px] min-[360px]:text-xs mt-1 min-[360px]:mt-2 font-semibold relative z-10">
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                </div>
+                <span className="text-[10px] min-[360px]:text-xs mt-1 font-semibold">
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        
-        {/* Safety Area Indicator (for devices with home indicators) */}
-        <div className="w-16 h-1 bg-gray-300/30 rounded-full mx-auto mt-3 opacity-60"></div>
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ export const createVirtualAccount = async (data: CreateVirtualAccountData): Prom
         currency: 'NGN',
         account_type: 'static',
         amount: 1000, // Default amount for account creation
-        reference: `starnetx-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        reference: `starlinenetworks-${Date.now()}-${Math.floor(Math.random() * 1000)}`
       }
     });
 
