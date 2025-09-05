@@ -243,6 +243,22 @@ export const TransferModal: React.FC<TransferModalProps> = ({ isOpen, onClose, o
           </button>
         </div>
 
+        {/* Disclaimer */}
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-blue-600 text-xs font-bold">i</span>
+            </div>
+            <div>
+              <p className="text-blue-800 text-sm font-medium">Starline Networks Wallet Transfer</p>
+              <p className="text-blue-700 text-xs mt-1">
+                This feature allows you to transfer funds between Starline Networks wallets only. 
+                You can send money to other users using their email or phone number.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
             <AlertCircle size={16} className="text-red-500" />

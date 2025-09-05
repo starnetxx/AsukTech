@@ -110,15 +110,26 @@ export const TransactionHistory: React.FC = () => {
       }
 
       // Transform and combine transactions
-      const transformedTransactions: TransactionRecord[] = (dbTransactions || []).map(tx => ({
-        ...tx,
-        plan_name: tx.plans?.name,
-        plan_duration: tx.plans?.duration,
-        location_name: tx.locations?.name,
-        // Normalize status for display
-        status: normalizeStatus(tx.status, tx.type),
-      }));
+      const transformedTransactions: TransactionRecord[] = (dbTransactions || []).map(tx => {
+        console.log('Processing transaction:', {
+          id: tx.id,
+          type: tx.type,
+          amount: tx.amount,
+          status: tx.status,
+          created_at: tx.created_at
+        });
+        
+        return {
+          ...tx,
+          plan_name: tx.plans?.name,
+          plan_duration: tx.plans?.duration,
+          location_name: tx.locations?.name,
+          // Normalize status for display
+          status: normalizeStatus(tx.status, tx.type),
+        };
+      });
 
+      console.log('All transformed transactions:', transformedTransactions);
       setTransactions(transformedTransactions);
     } catch (error) {
       console.error('Error loading transactions:', error);
@@ -214,6 +225,12 @@ export const TransactionHistory: React.FC = () => {
   };
 
   const getTransactionTitle = (transaction: TransactionRecord) => {
+    console.log('Getting title for transaction:', {
+      id: transaction.id,
+      type: transaction.type,
+      plan_name: transaction.plan_name
+    });
+    
     if (transaction.type === 'wallet_funding' || transaction.type === 'wallet_topup') {
       return 'Wallet Funding';
     }
