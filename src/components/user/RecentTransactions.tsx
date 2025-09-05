@@ -87,8 +87,22 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
   const getTransactionSubtitle = (transaction: any) => {
     switch (transaction.type) {
       case 'transfer_sent':
+        const recipient = transaction.transfer_to_user;
+        if (recipient) {
+          const name = recipient.first_name && recipient.last_name 
+            ? `${recipient.first_name} ${recipient.last_name}`
+            : recipient.email;
+          return `Sent to ${name}`;
+        }
         return 'Funds transferred to another user';
       case 'transfer_received':
+        const sender = transaction.transfer_from_user;
+        if (sender) {
+          const name = sender.first_name && sender.last_name 
+            ? `${sender.first_name} ${sender.last_name}`
+            : sender.email;
+          return `Received from ${name}`;
+        }
         return 'Funds received from another user';
       case 'wallet_funding':
         return 'Wallet topped up';

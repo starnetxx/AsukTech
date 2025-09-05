@@ -46,6 +46,17 @@ interface TransactionRecord {
   plan_duration?: string;
   // Location details (joined)
   location_name?: string;
+  // Transfer details (joined)
+  transfer_from_user?: {
+    email: string;
+    first_name?: string;
+    last_name?: string;
+  };
+  transfer_to_user?: {
+    email: string;
+    first_name?: string;
+    last_name?: string;
+  };
 }
 
 export const TransactionHistory: React.FC = () => {
@@ -93,13 +104,15 @@ export const TransactionHistory: React.FC = () => {
     try {
       setLoading(true);
       
-      // Load both transaction types
+      // Load both transaction types with sender/recipient info
       const { data: dbTransactions, error: transactionError } = await supabase
         .from('transactions')
         .select(`
           *,
           plans(name,duration),
-          locations(name)
+          locations(name),
+          transfer_from_user:profiles!transfer_from_user_id(email,first_name,last_name),
+          transfer_to_user:profiles!transfer_to_user_id(email,first_name,last_name)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -124,6 +137,8 @@ export const TransactionHistory: React.FC = () => {
           plan_name: tx.plans?.name,
           plan_duration: tx.plans?.duration,
           location_name: tx.locations?.name,
+          transfer_from_user: tx.transfer_from_user,
+          transfer_to_user: tx.transfer_to_user,
           // Normalize status for display
           status: normalizeStatus(tx.status, tx.type),
         };
@@ -263,10 +278,24 @@ export const TransactionHistory: React.FC = () => {
     }
     
     if (transaction.type === 'transfer_sent') {
+      const recipient = transaction.transfer_to_user;
+      if (recipient) {
+        const name = recipient.first_name && recipient.last_name 
+          ? `${recipient.first_name} ${recipient.last_name}`
+          : recipient.email;
+        return `Sent to ${name}`;
+      }
       return 'Funds transferred to another user';
     }
     
     if (transaction.type === 'transfer_received') {
+      const sender = transaction.transfer_from_user;
+      if (sender) {
+        const name = sender.first_name && sender.last_name 
+          ? `${sender.first_name} ${sender.last_name}`
+          : sender.email;
+        return `Received from ${name}`;
+      }
       return 'Funds received from another user';
     }
     
