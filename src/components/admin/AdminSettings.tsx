@@ -140,9 +140,18 @@ export const AdminSettings: React.FC = () => {
 
       for (const update of updates) {
         console.log('Saving update:', update);
+        
+        // Use upsert with proper conflict resolution
         const { error } = await supabase
           .from('admin_settings')
-          .upsert({ key: update.key, value: update.value });
+          .upsert(
+            { key: update.key, value: update.value },
+            { 
+              onConflict: 'key',
+              ignoreDuplicates: false 
+            }
+          );
+        
         if (error) {
           console.error('Error saving setting:', update.key, error);
         }
