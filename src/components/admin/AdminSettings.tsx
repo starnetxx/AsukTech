@@ -76,6 +76,7 @@ export const AdminSettings: React.FC = () => {
           return acc;
         }, {});
         
+        console.log('Loading settings from database:', settingsMap);
         setSettings({
           referral_enabled: settingsMap.referral_enabled === 'true',
           referral_reward_percentage: parseFloat(settingsMap.referral_reward_percentage || '10'),
@@ -111,6 +112,7 @@ export const AdminSettings: React.FC = () => {
   const saveSettings = async () => {
     setSaving(true);
     try {
+      console.log('Saving settings:', settings);
       const updates = [
         { key: 'referral_enabled', value: settings.referral_enabled.toString() },
         { key: 'referral_reward_percentage', value: settings.referral_reward_percentage.toString() },
@@ -137,11 +139,16 @@ export const AdminSettings: React.FC = () => {
       ];
 
       for (const update of updates) {
-        await supabase
+        console.log('Saving update:', update);
+        const { error } = await supabase
           .from('admin_settings')
           .upsert({ key: update.key, value: update.value });
+        if (error) {
+          console.error('Error saving setting:', update.key, error);
+        }
       }
 
+      console.log('All settings saved successfully');
       alert('Settings saved successfully!');
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -318,7 +325,11 @@ export const AdminSettings: React.FC = () => {
                   label="Minimum Transfer Amount (₦)"
                   type="number"
                   value={settings.transfer_min_amount.toString()}
-                  onChange={(value) => updateSetting('transfer_min_amount', parseFloat(value) || 0)}
+                  onChange={(value) => {
+                    const numValue = parseFloat(value);
+                    console.log('Transfer min amount change:', value, 'parsed:', numValue);
+                    updateSetting('transfer_min_amount', isNaN(numValue) ? 0 : numValue);
+                  }}
                   placeholder="100"
                 />
                 
