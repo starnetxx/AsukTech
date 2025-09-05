@@ -4,7 +4,7 @@ import { DataProvider } from './contexts/DataContext';
 import { AuthForm } from './components/auth/AuthForm';
 import { UserDashboard } from './components/user/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { initPWASessionManagement, debugStorage, clearAllAppDataAndCookies } from './utils/pwaUtils';
+import { initPWASessionManagement, debugStorage, clearAllAppDataAndCookies, clearAllAppDataAndCookiesPreservingRememberMe } from './utils/pwaUtils';
 import { supabase } from './utils/supabase';
 
 // Import auth debug utilities (available in console as window.authDebug)
@@ -68,9 +68,10 @@ function App() {
     console.log('PWA initialized. Debug with: window.pwaDebug()');
 
     // Always sign out and clear app data on every load (refresh or hard navigation)
+    // But preserve remember me data
     supabase.auth.signOut().catch(() => {}).finally(() => {
-      clearAllAppDataAndCookies().then(() => {
-        console.log('Auth signed out and app data cleared on load');
+      clearAllAppDataAndCookiesPreservingRememberMe().then(() => {
+        console.log('Auth signed out and app data cleared on load (preserving remember me)');
       });
     });
   }, []);

@@ -72,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const [lastProfileFetch, setLastProfileFetch] = useState<number>(0);
   const [isRefreshingSession, setIsRefreshingSession] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState<number>(0);
 
   // Clear all auth data from storage (except remember me credentials)
   const clearAllAuthData = () => {
@@ -338,6 +339,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(interval);
   }, [authUser?.id, user]);
 
+  // Add 5-minute session timeout
+  useEffect(() => {
+    if (!authUser?.id) return;
+    
+    // Set session start time when user logs in
+    if (sessionStartTime === 0) {
+      setSessionStartTime(Date.now());
+    }
+    
+    const sessionTimeout = setInterval(() => {
+      const now = Date.now();
+      const sessionDuration = now - sessionStartTime;
+      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+      
+      if (sessionDuration >= fiveMinutes) {
+        console.log('Session expired after 5 minutes, logging out...');
+        logout();
+        clearInterval(sessionTimeout);
+      }
+    }, 10000); // Check every 10 seconds
+    
+    return () => clearInterval(sessionTimeout);
+  }, [authUser?.id, sessionStartTime]);
+
   const fetchUserProfile = async (userId: string, forceRefresh: boolean = false) => {
     try {
       setProfileLoading(true);
@@ -506,6 +531,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Login successful:', data.user.email);
         setAuthUser(data.user);
         setSessionLoaded(true);
+        setSessionStartTime(Date.now()); // Reset session start time on login
         
         // Force fresh profile fetch on login
         try {
@@ -651,6 +677,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setAuthUser(null);
       setIsAdmin(false);
+      setSessionStartTime(0); // Reset session start time on logout
 
       // Fire-and-forget remote sign out; don't gate UI on this
       supabase.auth.signOut().catch((error) => {

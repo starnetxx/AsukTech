@@ -17,6 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: false, // Disable auto-refresh to force short sessions
     detectSessionInUrl: true,
     storageKey: NEW_STORAGE_KEY, // new standard prefix
+    flowType: 'pkce',
     storage: {
       // Use default localStorage with minimal interference
       getItem: (key: string) => {

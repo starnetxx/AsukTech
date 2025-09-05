@@ -187,6 +187,39 @@ export const clearAllAppDataAndCookies = async () => {
 };
 
 /**
+ * Clear all app data and cookies but preserve remember me data
+ */
+export const clearAllAppDataAndCookiesPreservingRememberMe = async () => {
+  try {
+    // Save remember me data before clearing
+    const rememberMeData = localStorage.getItem('starline_auth_data') || localStorage.getItem('starnetx_auth_data');
+    
+    // Clear caches
+    if ('caches' in window) {
+      const names = await caches.keys();
+      await Promise.all(names.map(name => caches.delete(name)));
+    }
+
+    // Clear storages
+    try { localStorage.clear(); } catch {}
+    try { sessionStorage.clear(); } catch {}
+
+    // Restore remember me data if it existed
+    if (rememberMeData) {
+      localStorage.setItem('starline_auth_data', rememberMeData);
+      console.log('Remember me data preserved during logout');
+    }
+
+    // Clear cookies
+    document.cookie.split(';').forEach((c) => {
+      document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
+    });
+  } catch (e) {
+    console.warn('clearAllAppDataAndCookiesPreservingRememberMe warning:', e);
+  }
+};
+
+/**
  * Validate session freshness
  */
 export const isSessionFresh = (lastUpdate: number, maxAgeMinutes: number = 30): boolean => {
