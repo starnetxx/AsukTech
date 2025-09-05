@@ -11,7 +11,8 @@ import { BottomNavigation } from './BottomNavigation';
 import { ReferralPage } from './ReferralPage';
 import { SettingsPage } from './SettingsPage';
 import { NotificationBanner } from './NotificationBanner';
-import { Bell, ChevronDown, LogOut, Eye, EyeOff, Copy, Smartphone, CreditCard, ArrowUpRight, Clock } from 'lucide-react';
+import { TransferModal } from './TransferModal';
+import { Bell, ChevronDown, LogOut, Eye, EyeOff, Copy, Smartphone, CreditCard, ArrowUpRight, Clock, Send } from 'lucide-react';
 
 type ActivePage = 'home' | 'plans' | 'referrals' | 'settings' | 'virtual-account';
 
@@ -23,6 +24,7 @@ export const UserDashboard: React.FC = () => {
   const { isOnline, isSlow } = useNetworkStatus();
   const [showBalance, setShowBalance] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
 
   // Remove the activation logic - we'll show recent transactions instead
 
@@ -121,6 +123,17 @@ export const UserDashboard: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Transfer Button */}
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <button
+                  onClick={() => setShowTransferModal(true)}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl font-semibold transition-colors"
+                >
+                  <Send size={16} />
+                  Transfer Funds
+                </button>
+              </div>
 
               {/* Dots indicator */}
               <div className="flex justify-center space-x-2 mt-2">
@@ -323,6 +336,16 @@ export const UserDashboard: React.FC = () => {
           </div>
         </main>
         <BottomNavigation activePage={activePage} onPageChange={setActivePage} />
+        
+        {/* Transfer Modal */}
+        <TransferModal
+          isOpen={showTransferModal}
+          onClose={() => setShowTransferModal(false)}
+          onSuccess={() => {
+            refreshData();
+            refreshSession();
+          }}
+        />
       </div>
     </div>
   );

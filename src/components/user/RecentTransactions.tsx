@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useData } from '../../contexts/DataContext';
 import { Card } from '../ui/Card';
-import { Clock, MapPin, Wifi, ArrowRight, TrendingUp } from 'lucide-react';
+import { Clock, MapPin, Wifi, ArrowRight, TrendingUp, Send, ArrowDown } from 'lucide-react';
 
 interface RecentTransactionsProps {
   onNavigateToHistory?: () => void;
@@ -10,13 +10,13 @@ interface RecentTransactionsProps {
 
 export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNavigateToHistory }) => {
   const { user } = useAuth();
-  const { getUserPurchases, plans, locations } = useData();
+  const { getUserTransactions, plans, locations } = useData();
 
-  const userPurchases = getUserPurchases(user?.id || '');
+  const userTransactions = getUserTransactions(user?.id || '');
   
   // Get last 2 transactions, sorted by newest first
-  const recentTransactions = userPurchases
-    .sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime())
+  const recentTransactions = userTransactions
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 2);
 
   const getStatusColor = (status: string) => {
@@ -27,6 +27,10 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
         return 'bg-red-100 text-red-700';
       case 'pending':
         return 'bg-yellow-100 text-yellow-700';
+      case 'success':
+        return 'bg-green-100 text-green-700';
+      case 'failed':
+        return 'bg-red-100 text-red-700';
       default:
         return 'bg-gray-100 text-gray-700';
     }
@@ -40,8 +44,59 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
         return 'Expired';
       case 'pending':
         return 'Pending';
+      case 'success':
+        return 'Success';
+      case 'failed':
+        return 'Failed';
       default:
         return status;
+    }
+  };
+
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'transfer_sent':
+        return <Send size={14} className="text-red-600" />;
+      case 'transfer_received':
+        return <ArrowDown size={14} className="text-green-600" />;
+      case 'wallet_funding':
+        return <ArrowDown size={14} className="text-blue-600" />;
+      case 'plan_purchase':
+        return <Wifi size={14} className="text-purple-600" />;
+      default:
+        return <Wifi size={14} className="text-gray-600" />;
+    }
+  };
+
+  const getTransactionTitle = (transaction: any) => {
+    switch (transaction.type) {
+      case 'transfer_sent':
+        return 'Transfer Sent';
+      case 'transfer_received':
+        return 'Transfer Received';
+      case 'wallet_funding':
+        return 'Wallet Funding';
+      case 'plan_purchase':
+        const plan = plans.find(p => p.id === transaction.plan_id);
+        return plan?.name || 'Plan Purchase';
+      default:
+        return 'Transaction';
+    }
+  };
+
+  const getTransactionSubtitle = (transaction: any) => {
+    switch (transaction.type) {
+      case 'transfer_sent':
+        return 'Funds transferred to another user';
+      case 'transfer_received':
+        return 'Funds received from another user';
+      case 'wallet_funding':
+        return 'Wallet topped up';
+      case 'plan_purchase':
+        const location = locations.find(l => l.id === transaction.location_id);
+        return location?.name || 'Plan purchased';
+      default:
+        return 'Transaction completed';
     }
   };
 
@@ -75,9 +130,9 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
       {/* Transactions List */}
       <div className="space-y-3">
         {recentTransactions.map((transaction, index) => {
-          const plan = plans.find(p => p.id === transaction.planId);
-          const location = locations.find(l => l.id === transaction.locationId);
-          const purchaseDate = new Date(transaction.purchaseDate);
+          const transactionDate = new Date(transaction.created_at);
+          const isTransferSent = transaction.type === 'transfer_sent';
+          const isTransferReceived = transaction.type === 'transfer_received';
           
           return (
             <div 
@@ -86,46 +141,40 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
             >
               {/* Status indicator dot */}
               <div className={`absolute left-4 top-4 w-3 h-3 rounded-full ${
-                transaction.status === 'active' ? 'bg-green-500' : 
-                transaction.status === 'expired' ? 'bg-red-500' : 'bg-yellow-500'
+                transaction.status === 'success' || transaction.status === 'active' ? 'bg-green-500' : 
+                transaction.status === 'failed' || transaction.status === 'expired' ? 'bg-red-500' : 'bg-yellow-500'
               }`} />
               
               <div className="ml-6 flex items-center justify-between max-[450px]:ml-5 max-[450px]:flex-col max-[450px]:items-start max-[450px]:gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-3 mb-2 max-[450px]:space-x-2 max-[450px]:mb-1.5">
                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0 ${
-                      transaction.status === 'active' ? 'bg-green-100' : 
-                      transaction.status === 'expired' ? 'bg-red-100' : 'bg-yellow-100'
+                      transaction.status === 'success' || transaction.status === 'active' ? 'bg-green-100' : 
+                      transaction.status === 'failed' || transaction.status === 'expired' ? 'bg-red-100' : 'bg-yellow-100'
                     } max-[450px]:w-9 max-[450px]:h-9`}>
-                      <Wifi className={
-                        transaction.status === 'active' ? 'text-green-600' : 
-                        transaction.status === 'expired' ? 'text-red-600' : 'text-yellow-600'
-                      } size={14} />
+                      {getTransactionIcon(transaction.type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 text-sm truncate max-[450px]:text-[13px] max-[340px]:text-[12px]">
-                        {plan?.name || 'Unknown Plan'}
+                        {getTransactionTitle(transaction)}
                       </p>
                       <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1 max-[450px]:text-[11px]">
-                        <div className="flex items-center space-x-1">
-                          <MapPin size={9} />
-                          <span className="truncate">{location?.name || 'Unknown'}</span>
-                        </div>
+                        <span className="truncate">{getTransactionSubtitle(transaction)}</span>
                         <span className="text-gray-400">•</span>
                         <span className="text-gray-500">
-                          {purchaseDate.toLocaleDateString('en-US', { 
+                          {transactionDate.toLocaleDateString('en-US', { 
                             month: 'short', 
                             day: 'numeric'
-                          })}, {purchaseDate.toLocaleTimeString('en-US', {
+                          })}, {transactionDate.toLocaleTimeString('en-US', {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
                         </span>
                       </div>
-                      {transaction.status === 'active' && transaction.mikrotikCredentials && (
+                      {transaction.type === 'plan_purchase' && transaction.status === 'active' && transaction.mikrotik_username && (
                         <div className="mt-2 max-[340px]:mt-1.5">
                           <span className="text-xs text-[#4285F4] font-medium bg-blue-50 px-2 py-1 rounded-lg inline-block max-[340px]:text-[11px] max-[340px]:px-1.5 max-[340px]:py-0.5">
-                            User: {transaction.mikrotikCredentials.username}
+                            User: {transaction.mikrotik_username}
                           </span>
                         </div>
                       )}
@@ -137,8 +186,12 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
                   <span className={`text-xs px-3 py-1 rounded-full font-bold ${getStatusColor(transaction.status)} max-[450px]:text-[11px] max-[450px]:px-2.5 max-[450px]:py-0.5`}>
                     {getStatusText(transaction.status)}
                   </span>
-                  <p className="text-lg font-bold text-gray-900 mt-1 max-[450px]:text-base">
-                    ₦{transaction.amount.toLocaleString()}
+                  <p className={`text-lg font-bold mt-1 max-[450px]:text-base ${
+                    isTransferSent ? 'text-red-600' : 
+                    isTransferReceived ? 'text-green-600' : 
+                    'text-gray-900'
+                  }`}>
+                    {isTransferSent ? '-' : isTransferReceived ? '+' : ''}₦{transaction.amount.toLocaleString()}
                   </p>
                 </div>
               </div>

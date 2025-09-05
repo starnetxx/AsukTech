@@ -16,6 +16,13 @@ interface AdminSettings {
   funding_charge_max_deposit: number;
   referral_share_base_url: string;
   referral_min_payout: number;
+  // Transfer settings
+  transfer_enabled: boolean;
+  transfer_min_amount: number;
+  transfer_max_amount: number;
+  transfer_charge_enabled: boolean;
+  transfer_charge_type: 'percentage' | 'fixed';
+  transfer_charge_value: number;
   // How it Works content
   referral_howitworks_step1_title: string;
   referral_howitworks_step1_desc: string;
@@ -37,6 +44,12 @@ export const AdminSettings: React.FC = () => {
     funding_charge_max_deposit: 0,
     referral_share_base_url: 'https://starlinenetworks.com/signup',
     referral_min_payout: 500,
+    transfer_enabled: false,
+    transfer_min_amount: 100,
+    transfer_max_amount: 10000,
+    transfer_charge_enabled: false,
+    transfer_charge_type: 'percentage',
+    transfer_charge_value: 1,
     referral_howitworks_step1_title: 'Share your referral code',
     referral_howitworks_step1_desc: 'Send your unique link to friends and family',
     referral_howitworks_step2_title: 'They sign up and purchase',
@@ -74,6 +87,12 @@ export const AdminSettings: React.FC = () => {
           funding_charge_max_deposit: parseFloat(settingsMap.funding_charge_max_deposit || '0'),
           referral_share_base_url: settingsMap.referral_share_base_url || 'https://starlinenetworks.com/signup',
           referral_min_payout: parseFloat(settingsMap.referral_min_payout || '500'),
+          transfer_enabled: settingsMap.transfer_enabled === 'true',
+          transfer_min_amount: parseFloat(settingsMap.transfer_min_amount || '100'),
+          transfer_max_amount: parseFloat(settingsMap.transfer_max_amount || '10000'),
+          transfer_charge_enabled: settingsMap.transfer_charge_enabled === 'true',
+          transfer_charge_type: settingsMap.transfer_charge_type || 'percentage',
+          transfer_charge_value: parseFloat(settingsMap.transfer_charge_value || '1'),
           referral_howitworks_step1_title: settingsMap.referral_howitworks_step1_title || 'Share your referral code',
           referral_howitworks_step1_desc: settingsMap.referral_howitworks_step1_desc || 'Send your unique link to friends and family',
           referral_howitworks_step2_title: settingsMap.referral_howitworks_step2_title || 'They sign up and purchase',
@@ -103,6 +122,12 @@ export const AdminSettings: React.FC = () => {
         { key: 'funding_charge_max_deposit', value: settings.funding_charge_max_deposit.toString() },
         { key: 'referral_share_base_url', value: settings.referral_share_base_url },
         { key: 'referral_min_payout', value: settings.referral_min_payout.toString() },
+        { key: 'transfer_enabled', value: settings.transfer_enabled.toString() },
+        { key: 'transfer_min_amount', value: settings.transfer_min_amount.toString() },
+        { key: 'transfer_max_amount', value: settings.transfer_max_amount.toString() },
+        { key: 'transfer_charge_enabled', value: settings.transfer_charge_enabled.toString() },
+        { key: 'transfer_charge_type', value: settings.transfer_charge_type },
+        { key: 'transfer_charge_value', value: settings.transfer_charge_value.toString() },
         { key: 'referral_howitworks_step1_title', value: settings.referral_howitworks_step1_title },
         { key: 'referral_howitworks_step1_desc', value: settings.referral_howitworks_step1_desc },
         { key: 'referral_howitworks_step2_title', value: settings.referral_howitworks_step2_title },
@@ -265,6 +290,98 @@ export const AdminSettings: React.FC = () => {
                     </>
                   ) : (
                     'Funding charges are currently disabled'
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Transfer Settings */}
+          <div>
+            <h4 className="text-md font-semibold mb-4 text-gray-900">Transfer Settings</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="enableTransfers"
+                    checked={settings.transfer_enabled}
+                    onChange={(e) => updateSetting('transfer_enabled', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="enableTransfers" className="text-sm font-medium text-gray-700">
+                    Enable User Transfers
+                  </label>
+                </div>
+                
+                <Input
+                  label="Minimum Transfer Amount (₦)"
+                  type="number"
+                  value={settings.transfer_min_amount.toString()}
+                  onChange={(value) => updateSetting('transfer_min_amount', parseFloat(value) || 0)}
+                  placeholder="100"
+                />
+                
+                <Input
+                  label="Maximum Transfer Amount (₦)"
+                  type="number"
+                  value={settings.transfer_max_amount.toString()}
+                  onChange={(value) => updateSetting('transfer_max_amount', parseFloat(value) || 0)}
+                  placeholder="10000"
+                />
+                
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="enableTransferCharges"
+                    checked={settings.transfer_charge_enabled}
+                    onChange={(e) => updateSetting('transfer_charge_enabled', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="enableTransferCharges" className="text-sm font-medium text-gray-700">
+                    Enable Transfer Charges
+                  </label>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Transfer Charge Type</label>
+                  <select
+                    value={settings.transfer_charge_type}
+                    onChange={(e) => updateSetting('transfer_charge_type', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="percentage">Percentage</option>
+                    <option value="fixed">Fixed Amount</option>
+                  </select>
+                </div>
+                
+                <Input
+                  label={`Transfer Charge Value (${settings.transfer_charge_type === 'percentage' ? '%' : '₦'})`}
+                  type="number"
+                  value={settings.transfer_charge_value.toString()}
+                  onChange={(value) => updateSetting('transfer_charge_value', parseFloat(value) || 0)}
+                  placeholder="1"
+                />
+              </div>
+              
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h5 className="font-medium text-green-900 mb-2">Current Settings</h5>
+                <p className="text-sm text-green-800">
+                  {settings.transfer_enabled ? (
+                    <>
+                      Users can transfer between ₦{settings.transfer_min_amount} and ₦{settings.transfer_max_amount}
+                      {settings.transfer_charge_enabled && (
+                        <>
+                          <br />
+                          {settings.transfer_charge_type === 'percentage' 
+                            ? `${settings.transfer_charge_value}% charge` 
+                            : `₦${settings.transfer_charge_value} fixed charge`
+                          } per transfer
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    'User transfers are currently disabled'
                   )}
                 </p>
               </div>

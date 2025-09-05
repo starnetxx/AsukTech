@@ -47,7 +47,7 @@ export interface Transaction {
   locationId?: string;
   credentialId?: string;
   amount: number;
-  type: 'wallet_topup' | 'plan_purchase' | 'wallet_funding';
+  type: 'wallet_topup' | 'plan_purchase' | 'wallet_funding' | 'transfer_sent' | 'transfer_received';
   status: 'pending' | 'completed' | 'failed' | 'success' | 'active' | 'expired' | 'used';
   mikrotikUsername?: string;
   mikrotikPassword?: string;
@@ -56,6 +56,11 @@ export interface Transaction {
   activationDate?: string;
   createdAt: string;
   updatedAt: string;
+  // Transfer-specific fields
+  transferToUserId?: string;
+  transferFromUserId?: string;
+  transferCharge?: number;
+  transferReference?: string;
   // Computed properties for backward compatibility
   expiryDate: string;
   mikrotikCredentials: {
