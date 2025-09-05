@@ -15,7 +15,9 @@ import {
   Calendar,
   Search,
   Receipt,
-  Wallet
+  Wallet,
+  Send,
+  ArrowDown
 } from 'lucide-react';
 
 interface TransactionRecord {
@@ -24,7 +26,7 @@ interface TransactionRecord {
   plan_id?: string;
   location_id?: string;
   amount: number;
-  type: 'wallet_funding' | 'plan_purchase' | 'wallet_topup';
+  type: 'wallet_funding' | 'plan_purchase' | 'wallet_topup' | 'transfer_sent' | 'transfer_received';
   status: 'success' | 'pending' | 'failed' | 'completed' | 'active' | 'expired';
   reference?: string;
   flutterwave_reference?: string;
@@ -51,7 +53,7 @@ export const TransactionHistory: React.FC = () => {
   const { plans, locations } = useData();
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'funding' | 'purchase'>('all');
+  const [filter, setFilter] = useState<'all' | 'funding' | 'purchase' | 'transfer'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'pending' | 'failed' | 'active' | 'expired'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('');
@@ -142,11 +144,23 @@ export const TransactionHistory: React.FC = () => {
     if (type === 'wallet_funding' || type === 'wallet_topup') {
       return <ArrowDownLeft className="text-green-600" size={20} />;
     }
+    if (type === 'transfer_sent') {
+      return <Send className="text-red-600" size={20} />;
+    }
+    if (type === 'transfer_received') {
+      return <ArrowDown className="text-green-600" size={20} />;
+    }
     return <ArrowUpRight className="text-blue-600" size={20} />;
   };
 
   const getTransactionColor = (type: string) => {
     if (type === 'wallet_funding' || type === 'wallet_topup') {
+      return 'bg-green-100';
+    }
+    if (type === 'transfer_sent') {
+      return 'bg-red-100';
+    }
+    if (type === 'transfer_received') {
       return 'bg-green-100';
     }
     return 'bg-blue-100';
@@ -203,6 +217,12 @@ export const TransactionHistory: React.FC = () => {
     if (transaction.type === 'wallet_funding' || transaction.type === 'wallet_topup') {
       return 'Wallet Funding';
     }
+    if (transaction.type === 'transfer_sent') {
+      return 'Transfer Sent';
+    }
+    if (transaction.type === 'transfer_received') {
+      return 'Transfer Received';
+    }
     return transaction.plan_name || 'Plan Purchase';
   };
 
@@ -225,6 +245,14 @@ export const TransactionHistory: React.FC = () => {
       return `Via ${pretty}`;
     }
     
+    if (transaction.type === 'transfer_sent') {
+      return 'Funds transferred to another user';
+    }
+    
+    if (transaction.type === 'transfer_received') {
+      return 'Funds received from another user';
+    }
+    
     const parts = [];
     if (transaction.plan_duration) parts.push(transaction.plan_duration);
     if (transaction.location_name) parts.push(transaction.location_name);
@@ -232,8 +260,20 @@ export const TransactionHistory: React.FC = () => {
   };
 
   const getAmountDisplay = (transaction: TransactionRecord) => {
-    const sign = (transaction.type === 'wallet_funding' || transaction.type === 'wallet_topup') ? '+' : '-';
-    const color = (transaction.type === 'wallet_funding' || transaction.type === 'wallet_topup') ? 'text-green-600' : 'text-blue-600';
+    let sign = '-';
+    let color = 'text-blue-600';
+    
+    if (transaction.type === 'wallet_funding' || transaction.type === 'wallet_topup') {
+      sign = '+';
+      color = 'text-green-600';
+    } else if (transaction.type === 'transfer_sent') {
+      sign = '-';
+      color = 'text-red-600';
+    } else if (transaction.type === 'transfer_received') {
+      sign = '+';
+      color = 'text-green-600';
+    }
+    
     return (
       <span className={`font-bold ${color}`}>
         {sign}₦{transaction.amount.toLocaleString()}
@@ -245,7 +285,8 @@ export const TransactionHistory: React.FC = () => {
   const filteredTransactions = transactions.filter(transaction => {
     const typeMatch = filter === 'all' || 
       (filter === 'funding' && (transaction.type === 'wallet_funding' || transaction.type === 'wallet_topup')) ||
-      (filter === 'purchase' && transaction.type === 'plan_purchase');
+      (filter === 'purchase' && transaction.type === 'plan_purchase') ||
+      (filter === 'transfer' && (transaction.type === 'transfer_sent' || transaction.type === 'transfer_received'));
     
     const statusMatch = statusFilter === 'all' || transaction.status === statusFilter;
     
@@ -324,6 +365,7 @@ export const TransactionHistory: React.FC = () => {
               <option value="all">All Transactions</option>
               <option value="funding">Wallet Funding</option>
               <option value="purchase">Plan Purchases</option>
+              <option value="transfer">Transfers</option>
             </select>
           </div>
 
