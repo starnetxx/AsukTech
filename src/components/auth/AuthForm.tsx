@@ -18,7 +18,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
   const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   
   const { login, register, adminLogin, profileLoading, authUser } = useAuth();
   
