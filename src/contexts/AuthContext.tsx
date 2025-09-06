@@ -15,6 +15,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   adminLogin: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, phone?: string, referredBy?: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateWalletBalance: (amount: number) => Promise<void>;
   refreshProfile: () => void;
@@ -711,6 +712,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        console.error('Password reset error:', error);
+        
+        // Provide specific error messages based on the error type
+        if (error.message?.includes('Invalid email')) {
+          return { success: false, error: 'Please enter a valid email address.' };
+        }
+        if (error.message?.includes('User not found')) {
+          return { success: false, error: 'No account found with this email address.' };
+        }
+        if (error.message?.includes('Too many requests')) {
+          return { success: false, error: 'Too many password reset attempts. Please wait a few minutes and try again.' };
+        }
+        
+        return { success: false, error: 'Failed to send password reset email. Please try again.' };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      return { success: false, error: 'An unexpected error occurred. Please try again.' };
+    }
+  };
+
   const logout = async (preserveRememberMe: boolean = false): Promise<void> => {
     try {
       console.log('Starting logout process...');
@@ -1121,6 +1152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       adminLogin,
       register,
+      resetPassword,
       logout,
       updateWalletBalance,
       refreshProfile: () => user && fetchUserProfile(user.id),

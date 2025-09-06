@@ -19,8 +19,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
   
-  const { login, register, adminLogin, profileLoading, authUser } = useAuth();
+  const { login, register, adminLogin, resetPassword, profileLoading, authUser } = useAuth();
   
   // Load saved credentials on component mount and optionally auto-login
   React.useEffect(() => {
@@ -39,6 +43,27 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
       console.log('User already authenticated, should redirect from login page');
     }
   }, [authUser]);
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetMessage('');
+    setError('');
+
+    try {
+      const result = await resetPassword(resetEmail);
+      if (result.success) {
+        setResetMessage('Password reset email sent! Please check your inbox and follow the instructions to reset your password.');
+        setResetEmail('');
+      } else {
+        setError(result.error || 'Failed to send password reset email');
+      }
+    } catch (error) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,6 +192,19 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
               </div>
             )}
 
+            {/* Forgot Password Link */}
+            {isLogin && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm text-[#4285F4] hover:text-[#3367D6] font-medium transition-colors"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-2xl">
                 <div className="flex items-center gap-3 text-red-700 text-sm">
@@ -207,6 +245,74 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
           </form>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl w-full max-w-md">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Reset Password</h2>
+              <p className="text-gray-600">Enter your email address and we'll send you a link to reset your password.</p>
+            </div>
+
+            <form onSubmit={handleResetPassword} className="space-y-6">
+              <Input
+                label="Email Address"
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                className="w-full"
+              />
+
+              {resetMessage && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-2xl">
+                  <div className="flex items-center gap-3 text-green-700 text-sm">
+                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">✓</span>
+                    </div>
+                    <span>{resetMessage}</span>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-2xl">
+                  <div className="flex items-center gap-3 text-red-700 text-sm">
+                    <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">!</span>
+                    </div>
+                    <span>{error}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setResetEmail('');
+                    setResetMessage('');
+                    setError('');
+                  }}
+                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-2xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetLoading || !resetEmail}
+                  className="flex-1 px-6 py-3 bg-[#4285F4] hover:bg-[#3367D6] disabled:bg-gray-300 text-white font-semibold rounded-2xl transition-colors"
+                >
+                  {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
