@@ -146,14 +146,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           console.log('Found existing session for:', session.user.email);
           
-          // Check if this is a page refresh by looking for a refresh flag
-          const isRefresh = sessionStorage.getItem('page-refresh') === 'true';
+          // Check if this is a page refresh using performance API (recommended method)
+          const perfEntries = performance.getEntriesByType("navigation");
+          let isRefresh = perfEntries.length > 0 && (perfEntries[0] as PerformanceNavigationTiming).type === "reload";
+          
+          // Fallback: Use sessionStorage method if performance API doesn't work
+          if (!isRefresh) {
+            if (sessionStorage.getItem("reloaded")) {
+              isRefresh = true;
+              sessionStorage.removeItem("reloaded");
+            } else {
+              sessionStorage.setItem("reloaded", "true");
+            }
+          }
+          
           console.log('Is page refresh:', isRefresh);
           
           if (isRefresh) {
             // User is logged in and page was refreshed - trigger logout
             console.log('User is authenticated and page was refreshed, triggering logout...');
-            sessionStorage.removeItem('page-refresh'); // Clear the flag
             await logout(true); // Preserve remember me data
             return;
           } else {
@@ -265,15 +276,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Add beforeunload event listener to detect page refresh
-    const handleBeforeUnload = () => {
-      // Set a flag in sessionStorage to indicate page refresh
-      sessionStorage.setItem('page-refresh', 'true');
-    };
-
-    // Add the event listener
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
     // Start the initial session check
     getInitialSession();
     
@@ -291,7 +293,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mounted = false;
       subscription.unsubscribe();
       clearTimeout(failsafeTimeout);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
