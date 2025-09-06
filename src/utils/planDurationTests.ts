@@ -139,7 +139,7 @@ export function testTransactionExpiry(transaction: Transaction, plan: Plan): Pla
  * Test that custom plans don't conflict with standard plans
  */
 export function testCustomPlanCompatibility(plans: Plan[]): PlanDurationTestResult {
-  const standardTypes = ['3-hour', 'daily', 'weekly', 'monthly'];
+  const standardTypes = ['1-hour', '2-hour', '3-hour', 'daily', 'weekly', 'monthly'];
   const customPlans = plans.filter(p => p.type === 'custom');
   const standardPlans = plans.filter(p => standardTypes.includes(p.type));
   

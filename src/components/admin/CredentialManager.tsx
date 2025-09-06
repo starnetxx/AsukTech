@@ -267,7 +267,9 @@ export const CredentialManager: React.FC = () => {
               {/* Generate options from unique plan types */}
               {Array.from(new Set(plans.map(p => p.type))).map(type => (
                 <option key={type} value={type}>
-                  {type === '3-hour' ? '3-Hour' : 
+                  {type === '1-hour' ? '1-Hour' :
+                   type === '2-hour' ? '2-Hour' :
+                   type === '3-hour' ? '3-Hour' : 
                    type === 'daily' ? 'Daily' : 
                    type === 'weekly' ? 'Weekly' : 
                    type === 'monthly' ? 'Monthly' : 

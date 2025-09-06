@@ -22,7 +22,7 @@ export interface Plan {
   durationHours: number;
   price: number;
   dataAmount: string; // e.g., "2 GB", "Unlimited"
-  type: '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom';
+  type: '1-hour' | '2-hour' | '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom';
   popular: boolean;
   isUnlimited: boolean;
   isActive: boolean;
@@ -91,7 +91,7 @@ export interface Purchase extends Transaction {
 }
 
 export interface Credential extends CredentialPool {
-  planType: '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom';
+  planType: '1-hour' | '2-hour' | '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom';
   assignedUserId?: string;
   assignedPurchaseId?: string;
   assignedDate?: string;

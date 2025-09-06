@@ -110,7 +110,7 @@ export interface Database {
           duration_hours: number
           price: number
           data_amount: string
-          type: '3-hour' | 'daily' | 'weekly' | 'monthly'
+          type: '1-hour' | '2-hour' | '3-hour' | 'daily' | 'weekly' | 'monthly'
           popular: boolean
           is_unlimited: boolean
           is_active: boolean
@@ -124,7 +124,7 @@ export interface Database {
           duration_hours: number
           price: number
           data_amount: string
-          type: '3-hour' | 'daily' | 'weekly' | 'monthly'
+          type: '1-hour' | '2-hour' | '3-hour' | 'daily' | 'weekly' | 'monthly'
           popular?: boolean
           is_unlimited?: boolean
           is_active?: boolean

@@ -384,6 +384,8 @@ const PlanForm: React.FC<PlanFormProps> = ({ plan, onSubmit, onCancel }) => {
   // Auto-calculate duration hours based on type if not manually set
   const getDefaultDurationHours = (type: string): number => {
     switch (type) {
+      case '1-hour': return 1;
+      case '2-hour': return 2;
       case '3-hour': return 3;
       case 'daily': return 24;
       case 'weekly': return 168; // 24 * 7
@@ -527,6 +529,8 @@ const PlanForm: React.FC<PlanFormProps> = ({ plan, onSubmit, onCancel }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                 required
               >
+                <option value="1-hour">1-Hour</option>
+                <option value="2-hour">2-Hour</option>
                 <option value="3-hour">3-Hour</option>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>

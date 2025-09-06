@@ -59,11 +59,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return 'pending';
   };
 
-  const mapPlanIdToPlanType = useCallback((planId: string): '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom' => {
+  const mapPlanIdToPlanType = useCallback((planId: string): '1-hour' | '2-hour' | '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom' => {
     // Handle legacy rows where plan_id stored the type string
-    const legacyTypes = ['3-hour', 'daily', 'weekly', 'monthly', 'custom'] as const;
+    const legacyTypes = ['1-hour', '2-hour', '3-hour', 'daily', 'weekly', 'monthly', 'custom'] as const;
     if ((legacyTypes as readonly string[]).includes(planId)) {
-      return planId as '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom';
+      return planId as '1-hour' | '2-hour' | '3-hour' | 'daily' | 'weekly' | 'monthly' | 'custom';
     }
     const plan = plans.find(p => p.id === planId);
     if (!plan) return '3-hour';
