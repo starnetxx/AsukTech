@@ -341,9 +341,12 @@ export const UserDashboard: React.FC = () => {
         <TransferModal
           isOpen={showTransferModal}
           onClose={() => setShowTransferModal(false)}
-          onSuccess={() => {
-            refreshData();
-            refreshSession();
+          onSuccess={async () => {
+            // Refresh all data including transactions and user profile
+            await Promise.all([
+              refreshData(),
+              refreshSession()
+            ]);
           }}
         />
       </div>

@@ -196,9 +196,19 @@ export const TransferModal: React.FC<TransferModalProps> = ({ isOpen, onClose, o
       if (error) throw error;
 
       if (data.success) {
+        // Small delay to ensure database is updated
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Refresh session to get updated wallet balance
         await refreshSession();
+        
+        // Call the success callback to refresh data
         onSuccess();
+        
+        // Close the modal
         onClose();
+        
+        // Show success message
         alert(`Transfer successful! ₦${transferAmount.toLocaleString()} sent to ${recipientUser?.email}`);
       } else {
         setError(data.error || 'Transfer failed');
