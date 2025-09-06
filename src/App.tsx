@@ -4,8 +4,7 @@ import { DataProvider } from './contexts/DataContext';
 import { AuthForm } from './components/auth/AuthForm';
 import { UserDashboard } from './components/user/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { initPWASessionManagement, debugStorage, clearAllAppDataAndCookies, clearAllAppDataAndCookiesPreservingRememberMe } from './utils/pwaUtils';
-import { supabase } from './utils/supabase';
+import { initPWASessionManagement, debugStorage } from './utils/pwaUtils';
 
 // Import auth debug utilities (available in console as window.authDebug)
 import './utils/authDebug';
@@ -59,6 +58,23 @@ function AppContent() {
   return <AuthForm isAdmin={isAdminRoute} />;
 }
 
+// Component to handle logout on refresh
+function LogoutOnRefresh() {
+  const { logout } = useAuth();
+
+  useEffect(() => {
+    // Call logout function on every page refresh/load
+    console.log('Page refreshed - calling logout function');
+    logout().then(() => {
+      console.log('Logout completed on page refresh');
+    }).catch((error) => {
+      console.error('Error during logout on refresh:', error);
+    });
+  }, [logout]);
+
+  return null; // This component doesn't render anything
+}
+
 function App() {
   useEffect(() => {
     // Initialize PWA session management
@@ -66,60 +82,12 @@ function App() {
     
     // Log PWA status
     console.log('PWA initialized. Debug with: window.pwaDebug()');
-
-    // Only clear data and redirect on actual page refresh, not programmatic navigation
-    const handlePageRefresh = async () => {
-      try {
-        // Check if this is a page refresh using multiple methods
-        const navigationEntry = performance.getEntriesByType('navigation')[0] as any;
-        const isPageRefresh = navigationEntry?.type === 'reload' || 
-                             document.referrer === '' ||
-                             (window.history.length === 1 && document.referrer === '');
-        
-        // Also check if we have a flag indicating this is a redirect (not a refresh)
-        const isRedirect = sessionStorage.getItem('app_redirect') === 'true';
-        
-        if (isPageRefresh && !isRedirect) {
-          console.log('🔄 Page refresh detected - clearing all data and redirecting to login...');
-          
-          // Sign out from Supabase
-          await supabase.auth.signOut();
-          console.log('Supabase sign out completed');
-          
-          // Clear ALL data (not preserving remember me on refresh)
-          await clearAllAppDataAndCookies();
-          console.log('All app data, cookies, and storage cleared');
-          
-          // Set flag to indicate this is a redirect (not a refresh)
-          sessionStorage.setItem('app_redirect', 'true');
-          
-          // Force redirect to login page
-          window.location.href = '/';
-          console.log('Redirected to login page');
-        } else {
-          console.log('📱 App loaded normally (not a refresh)');
-          // Clear the redirect flag if it exists
-          sessionStorage.removeItem('app_redirect');
-        }
-        
-      } catch (error) {
-        console.error('Error during refresh cleanup:', error);
-        // Only redirect if there was an error during refresh detection
-        const navigationEntry = performance.getEntriesByType('navigation')[0] as any;
-        if (navigationEntry?.type === 'reload') {
-          sessionStorage.setItem('app_redirect', 'true');
-          window.location.href = '/';
-        }
-      }
-    };
-
-    // Execute the cleanup only on refresh
-    handlePageRefresh();
   }, []);
 
   return (
     <AuthProvider>
       <DataProvider>
+        <LogoutOnRefresh />
         <AppContent />
       </DataProvider>
     </AuthProvider>

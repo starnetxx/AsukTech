@@ -167,12 +167,11 @@ export const forceLogoutAndClear = async () => {
  */
 export const clearAllAppDataAndCookies = async () => {
   try {
-    console.log('🧹 Starting comprehensive data clearing...');
+    console.log('Starting comprehensive data clearing...');
     
     // Clear service worker caches
     if ('caches' in window) {
       const names = await caches.keys();
-      console.log(`🗑️ Clearing ${names.length} caches...`);
       await Promise.all(names.map(name => {
         console.log('Deleting cache:', name);
         return caches.delete(name);
@@ -182,7 +181,6 @@ export const clearAllAppDataAndCookies = async () => {
     // Clear service worker registrations
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
-      console.log(`🔧 Unregistering ${registrations.length} service workers...`);
       await Promise.all(registrations.map(reg => {
         console.log('Unregistering service worker:', reg.scope);
         return reg.unregister();
@@ -191,18 +189,16 @@ export const clearAllAppDataAndCookies = async () => {
 
     // Clear localStorage
     try { 
-      const localKeys = Object.keys(localStorage);
       localStorage.clear(); 
-      console.log(`💾 LocalStorage cleared (${localKeys.length} keys removed)`);
+      console.log('LocalStorage cleared');
     } catch (e) {
       console.warn('Error clearing localStorage:', e);
     }
     
     // Clear sessionStorage
     try { 
-      const sessionKeys = Object.keys(sessionStorage);
       sessionStorage.clear(); 
-      console.log(`📝 SessionStorage cleared (${sessionKeys.length} keys removed)`);
+      console.log('SessionStorage cleared');
     } catch (e) {
       console.warn('Error clearing sessionStorage:', e);
     }
@@ -211,7 +207,6 @@ export const clearAllAppDataAndCookies = async () => {
     if ('indexedDB' in window) {
       try {
         const databases = await indexedDB.databases?.() || [];
-        console.log(`🗄️ Clearing ${databases.length} IndexedDB databases...`);
         await Promise.all(databases.map(db => {
           if (db.name) {
             console.log('Deleting IndexedDB:', db.name);
@@ -224,45 +219,21 @@ export const clearAllAppDataAndCookies = async () => {
     }
 
     // Clear cookies more thoroughly
-    const cookies = document.cookie.split(';').filter(c => c.trim());
-    console.log(`🍪 Clearing ${cookies.length} cookies...`);
+    const cookies = document.cookie.split(';');
     cookies.forEach((cookie) => {
       const eqPos = cookie.indexOf('=');
       const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
       
-      if (name) {
-        // Clear cookie for current domain with multiple variations
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;secure`;
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;samesite=strict`;
-      }
+      // Clear cookie for current domain
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
     });
-    console.log('✅ Cookies cleared');
+    console.log('Cookies cleared');
 
-    // Clear any remaining auth tokens in memory
-    try {
-      // Clear any global auth state
-      if (typeof window !== 'undefined') {
-        // Clear any global variables that might hold auth state
-        Object.keys(window).forEach(key => {
-          if (key.includes('auth') || key.includes('supabase') || key.includes('session')) {
-            try {
-              delete (window as any)[key];
-            } catch (e) {
-              // Ignore errors when deleting window properties
-            }
-          }
-        });
-      }
-    } catch (e) {
-      console.warn('Error clearing global auth state:', e);
-    }
-
-    console.log('🎉 Comprehensive data clearing completed successfully');
+    console.log('Comprehensive data clearing completed');
   } catch (e) {
-    console.warn('⚠️ clearAllAppDataAndCookies warning:', e);
+    console.warn('clearAllAppDataAndCookies warning:', e);
   }
 };
 
