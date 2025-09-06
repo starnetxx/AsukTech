@@ -144,9 +144,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setAuthUser(session.user);
           setSessionLoaded(true);
           
-          // Fetch user profile
-          await fetchUserProfileWithTimeout(session.user.id);
-          console.log('Profile loaded from existing session');
+          // Fetch user profile (don't await - let it run in background)
+          fetchUserProfileWithTimeout(session.user.id)
+            .then(() => {
+              console.log('Profile loaded from existing session');
+            })
+            .catch((error) => {
+              console.warn('Profile fetch failed, using minimal profile:', error);
+            });
         } else if (mounted) {
           console.log('No existing session found');
           setAuthUser(null);
@@ -175,31 +180,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (mounted) {
-          console.log('Auth state changed:', event, session?.user?.email);
-          
+        console.log('Auth state changed:', event, session?.user?.email);
+
           if (session) {
             setAuthUser(session.user);
             setSessionLoaded(true);
             
             // Fetch user profile for sign in or token refresh
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-              await fetchUserProfileWithTimeout(session.user.id);
+            fetchUserProfileWithTimeout(session.user.id)
+              .then(() => {
+                console.log('Profile loaded after auth change');
+              })
+                .catch((error) => {
+                  console.warn('Profile fetch failed after auth change:', error);
+                });
             }
           } else {
-            setAuthUser(null);
-            setUser(null);
-            setIsAdmin(false);
-            setSessionLoaded(true);
+          setAuthUser(null);
+          setUser(null);
+          setIsAdmin(false);
+          setSessionLoaded(true);
           }
           
-          setLoading(false);
-          setInitialAuthCheck(true);
-        }
+                setLoading(false);
+                setInitialAuthCheck(true);
+              }
       }
     );
 
     
-    // Failsafe: If still loading after 10 seconds, force clear loading state
+    // Failsafe: If still loading after 5 seconds, force clear loading state
     const failsafeTimeout = setTimeout(() => {
       if (mounted && loading) {
         console.warn('Auth check taking too long, forcing loading state to false');
@@ -207,7 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSessionLoaded(true);
         setInitialAuthCheck(true);
       }
-    }, 10000);
+    }, 5000);
 
     return () => {
       mounted = false;
@@ -402,7 +413,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const minimalProfile = createMinimalUserProfile(authUser);
           setUser(minimalProfile);
           setIsAdmin(false);
-          setLoading(false); // User can use the app now
+          // Don't set loading(false) here - let the main auth flow handle it
           
           // Continue trying to fetch full profile in background (no await)
           fetchUserProfile(userId, forceRefresh).then(() => {
@@ -427,7 +438,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } finally {
       setProfileLoading(false);
-      setLoading(false);
+      // Don't set loading(false) here - let the main auth flow handle it
     }
   };
 
@@ -753,7 +764,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAuthUser(session.user);
         setSessionLoaded(true);
         // Refresh profile after session refresh
-        await fetchUserProfileWithTimeout(session.user.id);
+        fetchUserProfileWithTimeout(session.user.id)
+          .then(() => {
+            console.log('Profile refreshed after session refresh');
+          })
+          .catch((error) => {
+            console.warn('Profile refresh failed after session refresh:', error);
+          });
       }
     } catch (error) {
       console.error('Error refreshing session:', error);
