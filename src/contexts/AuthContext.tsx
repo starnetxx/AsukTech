@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User as AuthUser } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
 import { User } from '../types';
-import { clearAllAppDataAndCookies } from '../utils/pwaUtils';
+import { clearAllAppDataAndCookies, clearAllAppDataAndCookiesPreservingRememberMe } from '../utils/pwaUtils';
 
 interface AuthContextType {
   user: User | null;
@@ -145,22 +145,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           console.log('Found existing session for:', session.user.email);
-          setAuthUser(session.user);
-          setSessionLoaded(true);
           
-          // Fetch user profile
-          fetchUserProfileWithTimeout(session.user.id)
-            .then(() => {
-              console.log('Profile loaded from existing session');
-            })
-            .finally(() => {
-              if (mounted) {
-                setLoading(false);
-                setInitialAuthCheck(true);
-              }
-            });
+          // User is logged in - trigger logout on refresh (preserve remember me)
+          console.log('User is authenticated, triggering logout on refresh...');
+          await logout(true); // Preserve remember me data
+          return;
         } else {
-          console.log('No existing session found');
+          console.log('No existing session found - user not logged in, skipping logout on refresh');
           setAuthUser(null);
           setUser(null);
           setLoading(false);
@@ -685,7 +676,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async (): Promise<void> => {
+  const logout = async (preserveRememberMe: boolean = false): Promise<void> => {
     try {
       console.log('Starting logout process...');
       
@@ -700,8 +691,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Supabase sign out completed');
 
       // Clear all website data, cookies, and storage
-      await clearAllAppDataAndCookies();
-      console.log('All app data and cookies cleared');
+      if (preserveRememberMe) {
+        await clearAllAppDataAndCookiesPreservingRememberMe();
+        console.log('All app data and cookies cleared (preserving remember me)');
+      } else {
+        await clearAllAppDataAndCookies();
+        console.log('All app data and cookies cleared');
+      }
 
       // Clear any remaining auth data from storage
       clearAllAuthData();
@@ -712,7 +708,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Even if there's an error, still try to clear local data
       try {
-        await clearAllAppDataAndCookies();
+        if (preserveRememberMe) {
+          await clearAllAppDataAndCookiesPreservingRememberMe();
+        } else {
+          await clearAllAppDataAndCookies();
+        }
         clearAllAuthData();
       } catch (clearError) {
         console.error('Error clearing data during logout:', clearError);

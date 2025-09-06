@@ -5,6 +5,7 @@ import { AuthForm } from './components/auth/AuthForm';
 import { UserDashboard } from './components/user/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { initPWASessionManagement, debugStorage } from './utils/pwaUtils';
+import { supabase } from './utils/supabase';
 
 // Import auth debug utilities (available in console as window.authDebug)
 import './utils/authDebug';
@@ -58,23 +59,6 @@ function AppContent() {
   return <AuthForm isAdmin={isAdminRoute} />;
 }
 
-// Component to handle logout on refresh
-function LogoutOnRefresh() {
-  const { logout } = useAuth();
-
-  useEffect(() => {
-    // Call logout function on every page refresh/load
-    console.log('Page refreshed - calling logout function');
-    logout().then(() => {
-      console.log('Logout completed on page refresh');
-    }).catch((error) => {
-      console.error('Error during logout on refresh:', error);
-    });
-  }, [logout]);
-
-  return null; // This component doesn't render anything
-}
-
 function App() {
   useEffect(() => {
     // Initialize PWA session management
@@ -87,7 +71,6 @@ function App() {
   return (
     <AuthProvider>
       <DataProvider>
-        <LogoutOnRefresh />
         <AppContent />
       </DataProvider>
     </AuthProvider>
