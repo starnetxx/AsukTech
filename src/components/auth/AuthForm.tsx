@@ -260,7 +260,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
                 label="Email Address"
                 type="email"
                 value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
+                onChange={setResetEmail}
                 placeholder="Enter your email"
                 required
                 className="w-full"
