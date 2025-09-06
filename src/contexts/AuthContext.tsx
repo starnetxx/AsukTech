@@ -146,10 +146,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session?.user) {
           console.log('Found existing session for:', session.user.email);
           
-          // User is logged in - trigger logout on refresh (preserve remember me)
-          console.log('User is authenticated, triggering logout on refresh...');
-          await logout(true); // Preserve remember me data
-          return;
+          // Check if this is a page refresh by looking for a refresh flag
+          const isRefresh = sessionStorage.getItem('page-refresh') === 'true';
+          console.log('Is page refresh:', isRefresh);
+          
+          if (isRefresh) {
+            // User is logged in and page was refreshed - trigger logout
+            console.log('User is authenticated and page was refreshed, triggering logout...');
+            sessionStorage.removeItem('page-refresh'); // Clear the flag
+            await logout(true); // Preserve remember me data
+            return;
+          } else {
+            // User is authenticated but not a refresh, load profile normally
+            console.log('User is authenticated but not a refresh, loading profile...');
+            setAuthUser(session.user);
+            setSessionLoaded(true);
+            
+            // Fetch user profile
+            fetchUserProfileWithTimeout(session.user.id)
+              .then(() => {
+                console.log('Profile loaded from existing session');
+              })
+              .finally(() => {
+                if (mounted) {
+                  setLoading(false);
+                  setInitialAuthCheck(true);
+                }
+              });
+          }
         } else {
           console.log('No existing session found - user not logged in, skipping logout on refresh');
           setAuthUser(null);
@@ -241,6 +265,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
+    // Add beforeunload event listener to detect page refresh
+    const handleBeforeUnload = () => {
+      // Set a flag in sessionStorage to indicate page refresh
+      sessionStorage.setItem('page-refresh', 'true');
+    };
+
+    // Add the event listener
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     // Start the initial session check
     getInitialSession();
     
@@ -258,6 +291,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mounted = false;
       subscription.unsubscribe();
       clearTimeout(failsafeTimeout);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
