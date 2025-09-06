@@ -14,7 +14,7 @@ const OLD_STORAGE_KEY = 'sb-starnetx-auth-token';
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true, // Enable session persistence
-    autoRefreshToken: false, // Disable auto-refresh to force short sessions
+    autoRefreshToken: true, // Enable auto-refresh for proper session persistence
     detectSessionInUrl: true,
     storageKey: NEW_STORAGE_KEY, // new standard prefix
     flowType: 'pkce',

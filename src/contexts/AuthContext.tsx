@@ -126,159 +126,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Supabase configuration is invalid, auth will likely fail');
     }
 
-    // Get initial session with timeout protection
-    const getInitialSession = async () => {
+    // Critical: Add async function to properly handle session restoration
+    const initializeAuth = async () => {
       try {
-        console.log('Starting initial auth session check...');
+        setLoading(true); // Make sure we have a loading state
         
-        // Try to get existing session first
+        // IMPORTANT: Use getSession, not getUser
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting session:', error);
-          setAuthUser(null);
-          setUser(null);
-          setLoading(false);
-          setInitialAuthCheck(true);
-          setSessionLoaded(true);
-          return;
+          console.error('Session restoration error:', error);
+          // Don't throw here, just log
         }
         
-        if (session?.user) {
+        if (mounted && session) {
           console.log('Found existing session for:', session.user.email);
+          setAuthUser(session.user);
+          setSessionLoaded(true);
           
-          // Check if this is a page refresh using performance API (recommended method)
-          const perfEntries = performance.getEntriesByType("navigation");
-          let isRefresh = perfEntries.length > 0 && (perfEntries[0] as PerformanceNavigationTiming).type === "reload";
-          
-          // Fallback: Use sessionStorage method if performance API doesn't work
-          if (!isRefresh) {
-            if (sessionStorage.getItem("reloaded")) {
-              isRefresh = true;
-              sessionStorage.removeItem("reloaded");
-            } else {
-              sessionStorage.setItem("reloaded", "true");
-            }
-          }
-          
-          console.log('Is page refresh:', isRefresh);
-          
-          if (isRefresh) {
-            // User is logged in and page was refreshed - trigger logout
-            console.log('User is authenticated and page was refreshed, triggering logout...');
-            await logout(true); // Preserve remember me data
-            return;
-          } else {
-            // User is authenticated but not a refresh, load profile normally
-            console.log('User is authenticated but not a refresh, loading profile...');
-            setAuthUser(session.user);
-            setSessionLoaded(true);
-            
-            // Fetch user profile
-            fetchUserProfileWithTimeout(session.user.id)
-              .then(() => {
-                console.log('Profile loaded from existing session');
-              })
-              .finally(() => {
-                if (mounted) {
-                  setLoading(false);
-                  setInitialAuthCheck(true);
-                }
-              });
-          }
-        } else {
-          console.log('No existing session found - user not logged in, skipping logout on refresh');
+          // Fetch user profile
+          await fetchUserProfileWithTimeout(session.user.id);
+          console.log('Profile loaded from existing session');
+        } else if (mounted) {
+          console.log('No existing session found');
           setAuthUser(null);
           setUser(null);
-          setLoading(false);
-          setInitialAuthCheck(true);
           setSessionLoaded(true);
         }
       } catch (error) {
-        console.error('Unexpected error in getInitialSession:', error);
+        console.error('Auth initialization error:', error);
         if (mounted) {
           setAuthUser(null);
           setUser(null);
+          setSessionLoaded(true);
+        }
+      } finally {
+        if (mounted) {
           setLoading(false);
           setInitialAuthCheck(true);
-          setSessionLoaded(true);
         }
       }
     };
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      try {
-        if (!mounted) return;
-        
-        console.log('Auth state changed:', event, session?.user?.email);
+    // Call the initialization
+    initializeAuth();
 
-        // Handle different auth events
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-          if (session?.user) {
-            setAuthUser(session.user);
-            setSessionLoaded(true);
-            
-            // Fetch profile without blocking
-            fetchUserProfileWithTimeout(session.user.id)
-              .then(() => {
-                console.log('Profile loaded after auth change');
-              })
-              .finally(() => {
-                if (mounted) {
-                  setLoading(false);
-                  setInitialAuthCheck(true);
-                }
-              });
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setAuthUser(null);
-          setUser(null);
-          setIsAdmin(false);
-          setLoading(false);
-          setInitialAuthCheck(true);
-          setSessionLoaded(true);
-        } else if (event === 'INITIAL_SESSION') {
-          // This event is fired when the session is restored from localStorage
-          if (session?.user) {
-            console.log('Initial session restored:', session.user.email);
-            setAuthUser(session.user);
-            setSessionLoaded(true);
-            
-            fetchUserProfileWithTimeout(session.user.id)
-            .finally(() => {
-              // Always set loading to false after profile attempt
-              setLoading(false);
-            })
-            .catch((profileError) => {
-              console.warn('Profile fetch failed on initial session:', profileError);
-              const minimalProfile = createMinimalUserProfile(session.user);
-              setUser(minimalProfile);
-              setIsAdmin(false);
-            }).finally(() => {
-              if (mounted) {
-                setLoading(false);
-                setInitialAuthCheck(true);
-              }
-            });
-          } else {
-            setLoading(false);
-            setInitialAuthCheck(true);
-            setSessionLoaded(true);
-          }
-        }
-      } catch (error) {
-        console.error('Error in auth state change:', error);
+    // Set up the auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
         if (mounted) {
+          console.log('Auth state changed:', event, session?.user?.email);
+          
+          if (session) {
+            setAuthUser(session.user);
+            setSessionLoaded(true);
+            
+            // Fetch user profile for sign in or token refresh
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+              await fetchUserProfileWithTimeout(session.user.id);
+            }
+          } else {
+            setAuthUser(null);
+            setUser(null);
+            setIsAdmin(false);
+            setSessionLoaded(true);
+          }
+          
           setLoading(false);
           setInitialAuthCheck(true);
-          setSessionLoaded(true);
         }
       }
-    });
+    );
 
-    // Start the initial session check
-    getInitialSession();
     
     // Failsafe: If still loading after 10 seconds, force clear loading state
     const failsafeTimeout = setTimeout(() => {
@@ -815,27 +734,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshSession = async (): Promise<void> => {
     try {
-      const { data, error } = await supabase.auth.refreshSession();
+      const { data: { session }, error } = await supabase.auth.refreshSession();
       if (error) {
         console.error('Session refresh failed:', error);
-        // Check current session; only logout if no session exists
-        const { data: current } = await supabase.auth.getSession();
-        if (!current.session) {
+        // If refresh fails, try getting session again
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession) {
+          setAuthUser(currentSession.user);
+          setSessionLoaded(true);
+        } else {
+          // No session exists, logout
           await logout();
         }
         return;
       }
-      if (data.session?.user) {
-        // Update auth user and fetch profile in background
-        setAuthUser(data.session.user);
-        void fetchUserProfileWithTimeout(data.session.user.id);
+      
+      if (session) {
+        setAuthUser(session.user);
+        setSessionLoaded(true);
+        // Refresh profile after session refresh
+        await fetchUserProfileWithTimeout(session.user.id);
       }
     } catch (error) {
-      console.error('Session refresh error:', error);
-      // Soft-fail: do not immediately logout; check session first
-      const { data: current } = await supabase.auth.getSession();
-      if (!current.session) {
-        await logout();
+      console.error('Error refreshing session:', error);
+      // If refresh fails, try getting session again
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setAuthUser(session.user);
+        setSessionLoaded(true);
       }
     }
   };
