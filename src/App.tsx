@@ -67,24 +67,33 @@ function App() {
     // Log PWA status
     console.log('PWA initialized. Debug with: window.pwaDebug()');
 
-    // Always sign out and clear app data on every load (refresh or hard navigation)
-    // But preserve remember me data
-    console.log('Page refresh detected - starting comprehensive data clearing...');
-    supabase.auth.signOut().catch(() => {}).finally(async () => {
+    // Always sign out and clear ALL app data on every load (refresh or hard navigation)
+    // This ensures a clean state and redirects to login
+    const clearAndRedirect = async () => {
       try {
-        // Use the same comprehensive clearing as logout, but preserve remember me
-        await clearAllAppDataAndCookiesPreservingRememberMe();
-        console.log('Comprehensive data clearing completed on page refresh (preserving remember me)');
+        console.log('Page refresh detected - clearing all data and redirecting to login...');
+        
+        // Sign out from Supabase
+        await supabase.auth.signOut();
+        console.log('Supabase sign out completed');
+        
+        // Clear ALL data (not preserving remember me on refresh)
+        await clearAllAppDataAndCookies();
+        console.log('All app data, cookies, and storage cleared');
+        
+        // Force redirect to login page
+        window.location.href = '/';
+        console.log('Redirected to login page');
+        
       } catch (error) {
-        console.error('Error during refresh data clearing:', error);
-        // Fallback to basic clearing if comprehensive fails
-        try {
-          await clearAllAppDataAndCookies();
-        } catch (fallbackError) {
-          console.error('Fallback clearing also failed:', fallbackError);
-        }
+        console.error('Error during refresh cleanup:', error);
+        // Force redirect even if there's an error
+        window.location.href = '/';
       }
-    });
+    };
+
+    // Execute the cleanup and redirect
+    clearAndRedirect();
   }, []);
 
   return (
