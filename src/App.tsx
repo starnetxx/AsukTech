@@ -69,10 +69,21 @@ function App() {
 
     // Always sign out and clear app data on every load (refresh or hard navigation)
     // But preserve remember me data
-    supabase.auth.signOut().catch(() => {}).finally(() => {
-      clearAllAppDataAndCookiesPreservingRememberMe().then(() => {
-        console.log('Auth signed out and app data cleared on load (preserving remember me)');
-      });
+    console.log('Page refresh detected - starting comprehensive data clearing...');
+    supabase.auth.signOut().catch(() => {}).finally(async () => {
+      try {
+        // Use the same comprehensive clearing as logout, but preserve remember me
+        await clearAllAppDataAndCookiesPreservingRememberMe();
+        console.log('Comprehensive data clearing completed on page refresh (preserving remember me)');
+      } catch (error) {
+        console.error('Error during refresh data clearing:', error);
+        // Fallback to basic clearing if comprehensive fails
+        try {
+          await clearAllAppDataAndCookies();
+        } catch (fallbackError) {
+          console.error('Fallback clearing also failed:', fallbackError);
+        }
+      }
     });
   }, []);
 
