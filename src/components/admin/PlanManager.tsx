@@ -203,7 +203,7 @@ export const PlanManager: React.FC = () => {
           <Card className="w-full max-w-sm p-6">
             <h3 className="text-lg font-semibold mb-4 text-center">Delete Plan</h3>
             <p className="text-gray-600 mb-6 text-center">
-              Are you sure you want to delete this plan? This action cannot be undone.
+              Are you sure you want to delete this plan? This will also delete all associated credentials and cannot be undone.
             </p>
             <div className="flex gap-3">
               <Button
@@ -215,9 +215,14 @@ export const PlanManager: React.FC = () => {
               </Button>
               <Button
                 variant="danger"
-                onClick={() => {
-                  deletePlan(deleteConfirm);
-                  setDeleteConfirm(null);
+                onClick={async () => {
+                  try {
+                    await deletePlan(deleteConfirm);
+                    setDeleteConfirm(null);
+                  } catch (error) {
+                    console.error('Failed to delete plan:', error);
+                    alert('Failed to delete plan. It may be in use by existing credentials or transactions. Please try again or contact support.');
+                  }
                 }}
                 className="flex-1"
               >

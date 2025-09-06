@@ -182,7 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fetchUserProfileWithTimeout(session.user.id)
               .then(() => {
                 console.log('Profile loaded after auth change');
-                // Admin role will be set in fetchUserProfile when profile is loaded
               })
               .finally(() => {
                 if (mounted) {
@@ -537,7 +536,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Force fresh profile fetch on login
         try {
           await fetchUserProfile(data.user.id, true); // Force refresh on login
-          // Admin role will be set in fetchUserProfile when profile is loaded
         } catch (profileError) {
           console.warn('Profile fetch failed during login, using minimal profile:', profileError);
           const minimalProfile = createMinimalUserProfile(data.user);
@@ -570,31 +568,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const loginResult = await login(email, password);
       if (!loginResult.success) return false;
 
-      // Wait for profile to be fetched and check admin status
-      let attempts = 0;
-      const maxAttempts = 10; // Wait up to 5 seconds (10 * 500ms)
+      // Check if user is admin after profile is fetched
+      // We need to wait a bit for the profile to be fetched
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Check if we have user data and if it's admin
-        if (user && user.role === 'admin') {
-          setIsAdmin(true);
-          console.log('Admin login successful, role confirmed:', user.role);
-          return true;
-        }
-        
-        // Also check authUser metadata as fallback
-        if (authUser && authUser.user_metadata?.role === 'admin') {
-          setIsAdmin(true);
-          console.log('Admin login successful, role from metadata:', authUser.user_metadata.role);
-          return true;
-        }
-        
-        attempts++;
+      if (user?.role === 'admin') {
+        setIsAdmin(true);
+        return true;
       }
-      
-      console.log('Admin login failed: user role not admin or profile not loaded');
+
       // If not admin, logout
       await logout();
       return false;
@@ -1042,7 +1024,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: authUser.email,
         createdAt: authUser.created_at,
         lastSignIn: authUser.last_sign_in_at,
-        userMetadata: authUser.user_metadata,
       } : null,
       user: user ? {
         id: user.id,
@@ -1056,7 +1037,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profileLoading,
       initialAuthCheck,
       isAdmin,
-      sessionStartTime,
       connectionStatus: 'unknown' as 'unknown' | 'checking' | 'ok' | 'failed',
     };
   };

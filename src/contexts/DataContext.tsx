@@ -503,6 +503,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deletePlan = async (id: string) => {
     try {
+      // First, delete all credential pools associated with this plan
+      const { error: credentialError } = await supabase
+        .from('credential_pools')
+        .delete()
+        .eq('plan_id', id);
+
+      if (credentialError) {
+        console.error('Error deleting associated credentials:', credentialError);
+        // Continue with plan deletion even if credential deletion fails
+      }
+
+      // Then delete the plan
       const { error } = await supabase
         .from('plans')
         .delete()
@@ -510,12 +522,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error deleting plan:', error);
-        return;
+        throw error; // Re-throw to show error to user
       }
 
       setPlans(prev => prev.filter(plan => plan.id !== id));
     } catch (error) {
       console.error('Error deleting plan:', error);
+      throw error; // Re-throw to show error to user
     }
   };
 
