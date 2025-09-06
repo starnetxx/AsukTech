@@ -117,65 +117,183 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // This useEffect will run only once when the component mounts
   useEffect(() => {
     let mounted = true;
 
-    const initializeAuth = async () => {
-      try {
-        setLoading(true);
-        
-        const { data: { session }, error } = await supabase.auth.getSession();
+    // Validate Supabase configuration first
+    const configValid = validateSupabaseConfig();
+    if (!configValid) {
+      console.error('Supabase configuration is invalid, auth will likely fail');
+    }
 
+    // Get initial session with timeout protection
+    const getInitialSession = async () => {
+      try {
+        console.log('Starting initial auth session check...');
+        
+        // Try to get existing session first
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (error) {
-          console.error('Session restoration error:', error);
+          console.error('Error getting session:', error);
+          setAuthUser(null);
+          setUser(null);
+          setLoading(false);
+          setInitialAuthCheck(true);
+          setSessionLoaded(true);
+          return;
         }
         
-        if (mounted) {
-          if (session) {
-            // Check for page refresh ONLY if a session exists
-            const perfEntries = performance.getEntriesByType("navigation");
-            const isRefresh = perfEntries.length > 0 && (perfEntries[0] as PerformanceNavigationTiming).type === "reload";
-            
-            if (isRefresh) {
-              console.log('Session exists on page refresh, logging out while preserving credentials.');
-              await logout(true); // Preserve "remember me" data
+        if (session?.user) {
+          console.log('Found existing session for:', session.user.email);
+          
+          // Check if this is a page refresh using performance API (recommended method)
+          const perfEntries = performance.getEntriesByType("navigation");
+          let isRefresh = perfEntries.length > 0 && (perfEntries[0] as PerformanceNavigationTiming).type === "reload";
+          
+          // Fallback: Use sessionStorage method if performance API doesn't work
+          if (!isRefresh) {
+            if (sessionStorage.getItem("reloaded")) {
+              isRefresh = true;
+              sessionStorage.removeItem("reloaded");
             } else {
-              setAuthUser(session.user);
-              await fetchUserProfileWithTimeout(session.user.id);
+              sessionStorage.setItem("reloaded", "true");
             }
           }
+          
+          console.log('Is page refresh:', isRefresh);
+          
+          if (isRefresh) {
+            // User is logged in and page was refreshed - trigger logout
+            console.log('User is authenticated and page was refreshed, triggering logout...');
+            await logout(true); // Preserve remember me data
+            return;
+          } else {
+            // User is authenticated but not a refresh, load profile normally
+            console.log('User is authenticated but not a refresh, loading profile...');
+          setAuthUser(session.user);
+          setSessionLoaded(true);
+          
+          // Fetch user profile
+          fetchUserProfileWithTimeout(session.user.id)
+            .then(() => {
+              console.log('Profile loaded from existing session');
+            })
+            .finally(() => {
+              if (mounted) {
+                setLoading(false);
+                setInitialAuthCheck(true);
+              }
+            });
+          }
+        } else {
+          console.log('No existing session found - user not logged in, skipping logout on refresh');
+          setAuthUser(null);
+          setUser(null);
           setLoading(false);
+          setInitialAuthCheck(true);
+          setSessionLoaded(true);
         }
-      } catch (e) {
-        console.error('Auth initialization error:', e);
+      } catch (error) {
+        console.error('Unexpected error in getInitialSession:', error);
         if (mounted) {
+          setAuthUser(null);
+          setUser(null);
           setLoading(false);
+          setInitialAuthCheck(true);
+          setSessionLoaded(true);
         }
       }
     };
 
-    initializeAuth();
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      try {
+        if (!mounted) return;
+        
+        console.log('Auth state changed:', event, session?.user?.email);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (mounted) {
-          const user = session?.user ?? null;
-          setAuthUser(user);
-          if (user) {
-            fetchUserProfileWithTimeout(user.id);
-          } else {
-            setUser(null);
-            setIsAdmin(false);
+        // Handle different auth events
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+          if (session?.user) {
+            setAuthUser(session.user);
+            setSessionLoaded(true);
+            
+            // Fetch profile without blocking
+            fetchUserProfileWithTimeout(session.user.id)
+              .then(() => {
+                console.log('Profile loaded after auth change');
+              })
+              .finally(() => {
+                if (mounted) {
+                  setLoading(false);
+                  setInitialAuthCheck(true);
+                }
+              });
           }
+        } else if (event === 'SIGNED_OUT') {
+          setAuthUser(null);
+          setUser(null);
+          setIsAdmin(false);
           setLoading(false);
+          setInitialAuthCheck(true);
+          setSessionLoaded(true);
+        } else if (event === 'INITIAL_SESSION') {
+          // This event is fired when the session is restored from localStorage
+          if (session?.user) {
+            console.log('Initial session restored:', session.user.email);
+            setAuthUser(session.user);
+            setSessionLoaded(true);
+            
+            fetchUserProfileWithTimeout(session.user.id)
+            .finally(() => {
+              // Always set loading to false after profile attempt
+              setLoading(false);
+            })
+            .catch((profileError) => {
+              console.warn('Profile fetch failed on initial session:', profileError);
+              const minimalProfile = createMinimalUserProfile(session.user);
+              setUser(minimalProfile);
+              setIsAdmin(false);
+            }).finally(() => {
+              if (mounted) {
+                setLoading(false);
+                setInitialAuthCheck(true);
+              }
+            });
+          } else {
+            setLoading(false);
+            setInitialAuthCheck(true);
+            setSessionLoaded(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error in auth state change:', error);
+        if (mounted) {
+          setLoading(false);
+          setInitialAuthCheck(true);
+          setSessionLoaded(true);
         }
       }
-    );
+    });
+
+    // Start the initial session check
+    getInitialSession();
+    
+    // Failsafe: If still loading after 10 seconds, force clear loading state
+    const failsafeTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth check taking too long, forcing loading state to false');
+        setLoading(false);
+        setSessionLoaded(true);
+        setInitialAuthCheck(true);
+      }
+    }, 10000);
 
     return () => {
       mounted = false;
-      subscription?.unsubscribe();
+      subscription.unsubscribe();
+      clearTimeout(failsafeTimeout);
     };
   }, []);
 
@@ -261,6 +379,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     return () => clearInterval(interval);
   }, [authUser?.id, user]);
+
+  // Add 5-minute session timeout
+  useEffect(() => {
+    if (!authUser?.id) return;
+    
+    // Set session start time when user logs in
+    if (sessionStartTime === 0) {
+      setSessionStartTime(Date.now());
+    }
+    
+    const sessionTimeout = setInterval(() => {
+      const now = Date.now();
+      const sessionDuration = now - sessionStartTime;
+      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+      
+      if (sessionDuration >= fiveMinutes) {
+        console.log('Session expired after 5 minutes, logging out...');
+        logout();
+        clearInterval(sessionTimeout);
+      }
+    }, 10000); // Check every 10 seconds
+    
+    return () => clearInterval(sessionTimeout);
+  }, [authUser?.id, sessionStartTime]);
 
   const fetchUserProfile = async (userId: string, forceRefresh: boolean = false) => {
     try {
@@ -1070,5 +1212,4 @@ export const getAllUsers = async (): Promise<User[]> => {
     console.error('Error fetching all users:', error);
     return [];
   }
-};
 };

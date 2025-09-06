@@ -11,15 +11,43 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const NEW_STORAGE_KEY = 'sb-starline-auth-token';
 const OLD_STORAGE_KEY = 'sb-starnetx-auth-token';
 
-const STARLINE_CLIENT_INFO = 'starline-networks-pwa/v1.0.0';
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: true,
-    persistSession: true,
+    persistSession: true, // Enable session persistence
+    autoRefreshToken: false, // Disable auto-refresh to force short sessions
     detectSessionInUrl: true,
-    storage: window.localStorage,
-    storageKey: 'supabase.auth.token',
+    storageKey: NEW_STORAGE_KEY, // new standard prefix
+    flowType: 'pkce',
+    storage: {
+      // Use default localStorage with minimal interference
+      getItem: (key: string) => {
+        // If the new key is requested but not present, fall back to old key once
+        const value = localStorage.getItem(key);
+        if (!value && key === NEW_STORAGE_KEY) {
+          const legacy = localStorage.getItem(OLD_STORAGE_KEY);
+          if (legacy) {
+            try {
+              // Copy forward to new key without deleting legacy
+              localStorage.setItem(NEW_STORAGE_KEY, legacy);
+              return legacy;
+            } catch {
+              return legacy;
+            }
+          }
+        }
+        return value;
+      },
+      setItem: (key: string, value: string) => {
+        localStorage.setItem(key, value);
+        // Optionally clean up legacy key if we just wrote the new one
+        if (key === NEW_STORAGE_KEY) {
+          try { localStorage.removeItem(OLD_STORAGE_KEY); } catch {}
+        }
+      },
+      removeItem: (key: string) => {
+        localStorage.removeItem(key);
+      },
+    },
   },
   realtime: {
     params: {
@@ -28,7 +56,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     headers: {
-      'X-Client-Info': STARLINE_CLIENT_INFO,
+      'X-Client-Info': 'starline-networks-pwa',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache'
     },

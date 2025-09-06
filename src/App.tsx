@@ -19,6 +19,7 @@ import './utils/debugStuckLoading';
 import './utils/debugDataLoading';
 // Import Supabase data debug utility (available in console as window.supabaseDebug)
 import './utils/supabaseDataDebug';
+import './RefreshAuthFix.js'; // Temporary fix for auth persistence issue
 
 // Make PWA debug available in console
 if (typeof window !== 'undefined') {
