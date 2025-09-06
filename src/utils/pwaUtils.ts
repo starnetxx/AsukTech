@@ -167,20 +167,71 @@ export const forceLogoutAndClear = async () => {
  */
 export const clearAllAppDataAndCookies = async () => {
   try {
-    // Clear caches
+    console.log('Starting comprehensive data clearing...');
+    
+    // Clear service worker caches
     if ('caches' in window) {
       const names = await caches.keys();
-      await Promise.all(names.map(name => caches.delete(name)));
+      await Promise.all(names.map(name => {
+        console.log('Deleting cache:', name);
+        return caches.delete(name);
+      }));
     }
 
-    // Clear storages
-    try { localStorage.clear(); } catch {}
-    try { sessionStorage.clear(); } catch {}
+    // Clear service worker registrations
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(reg => {
+        console.log('Unregistering service worker:', reg.scope);
+        return reg.unregister();
+      }));
+    }
 
-    // Clear cookies
-    document.cookie.split(';').forEach((c) => {
-      document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
+    // Clear localStorage
+    try { 
+      localStorage.clear(); 
+      console.log('LocalStorage cleared');
+    } catch (e) {
+      console.warn('Error clearing localStorage:', e);
+    }
+    
+    // Clear sessionStorage
+    try { 
+      sessionStorage.clear(); 
+      console.log('SessionStorage cleared');
+    } catch (e) {
+      console.warn('Error clearing sessionStorage:', e);
+    }
+
+    // Clear IndexedDB
+    if ('indexedDB' in window) {
+      try {
+        const databases = await indexedDB.databases?.() || [];
+        await Promise.all(databases.map(db => {
+          if (db.name) {
+            console.log('Deleting IndexedDB:', db.name);
+            return indexedDB.deleteDatabase(db.name);
+          }
+        }));
+      } catch (e) {
+        console.warn('Error clearing IndexedDB:', e);
+      }
+    }
+
+    // Clear cookies more thoroughly
+    const cookies = document.cookie.split(';');
+    cookies.forEach((cookie) => {
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+      
+      // Clear cookie for current domain
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
     });
+    console.log('Cookies cleared');
+
+    console.log('Comprehensive data clearing completed');
   } catch (e) {
     console.warn('clearAllAppDataAndCookies warning:', e);
   }

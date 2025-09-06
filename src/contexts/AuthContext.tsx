@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User as AuthUser } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
 import { User } from '../types';
+import { clearAllAppDataAndCookies } from '../utils/pwaUtils';
 
 interface AuthContextType {
   user: User | null;
@@ -81,12 +82,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Save remember me credentials before clearing (support legacy and new)
     const rememberMeData = localStorage.getItem('starline_auth_data') || localStorage.getItem('starnetx_auth_data');
     
-    // Only clear Supabase auth keys, not all storage
+    // Clear all Supabase and auth-related keys
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      // Be more selective - only clear actual Supabase auth keys
-      if (key && key.startsWith('sb-') && key.includes('auth-token')) {
+      if (key && (
+        key.startsWith('sb-') || // Supabase keys
+        key.includes('auth') || // Auth-related keys
+        key.includes('supabase') || // Supabase keys
+        key.includes('session') || // Session keys
+        key.includes('token') // Token keys
+      )) {
         keysToRemove.push(key);
       }
     }
@@ -94,6 +100,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Removing auth key:', key);
       localStorage.removeItem(key);
     });
+    
+    // Clear session storage completely
+    try {
+      sessionStorage.clear();
+      console.log('Session storage cleared');
+    } catch (error) {
+      console.error('Error clearing session storage:', error);
+    }
     
     // Restore remember me credentials if they existed
     if (rememberMeData) {
@@ -673,21 +687,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async (): Promise<void> => {
     try {
+      console.log('Starting logout process...');
+      
       // Optimistic local sign-out to avoid app-wide loading lock
       setUser(null);
       setAuthUser(null);
       setIsAdmin(false);
       setSessionStartTime(0); // Reset session start time on logout
 
-      // Fire-and-forget remote sign out; don't gate UI on this
-      supabase.auth.signOut().catch((error) => {
-        console.error('Logout error:', error);
-      });
+      // Sign out from Supabase first
+      await supabase.auth.signOut();
+      console.log('Supabase sign out completed');
+
+      // Clear all website data, cookies, and storage
+      await clearAllAppDataAndCookies();
+      console.log('All app data and cookies cleared');
+
+      // Clear any remaining auth data from storage
+      clearAllAuthData();
+      console.log('Auth data cleared from storage');
+
     } catch (error) {
       console.error('Logout error:', error);
+      
+      // Even if there's an error, still try to clear local data
+      try {
+        await clearAllAppDataAndCookies();
+        clearAllAuthData();
+      } catch (clearError) {
+        console.error('Error clearing data during logout:', clearError);
+      }
     } finally {
       // Ensure global loading overlay is not active after logout
       setLoading(false);
+      console.log('Logout process completed');
     }
   };
 
