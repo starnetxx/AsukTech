@@ -60,10 +60,13 @@ function AppContent() {
 }
 
 function App() {
+  const [isHandlingRefresh, setIsHandlingRefresh] = useState(false);
+
   useEffect(() => {
     // Check if the page was reloaded
     const entries = performance.getEntriesByType("navigation");
     if (entries.length > 0 && entries[0].type === 'reload') {
+      setIsHandlingRefresh(true);
       console.log('Page reloaded, clearing all app data and redirecting to login...');
       
       const clearDataAndRedirect = async () => {
@@ -75,7 +78,7 @@ function App() {
         
         // Redirect to the login page
         // Using window.location.replace to prevent going back to the broken state
-        window.location.replace('/');
+        window.location.replace('/login');
       };
       
       clearDataAndRedirect();
@@ -85,6 +88,17 @@ function App() {
       console.log('PWA initialized. Debug with: window.pwaDebug()');
     }
   }, []);
+
+  if (isHandlingRefresh) {
+    return (
+      <div className="min-h-screen bg-[#4285F4] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+          <div className="text-white text-xl">Resetting Session...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthProvider>
