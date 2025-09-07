@@ -4,7 +4,7 @@ import { DataProvider } from './contexts/DataContext';
 import { AuthForm } from './components/auth/AuthForm';
 import { UserDashboard } from './components/user/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { initPWASessionManagement, debugStorage } from './utils/pwaUtils';
+import { initPWASessionManagement, debugStorage, clearAllAppDataAndCookies } from './utils/pwaUtils';
 import { supabase } from './utils/supabase';
 
 // Import auth debug utilities (available in console as window.authDebug)
@@ -19,7 +19,6 @@ import './utils/debugStuckLoading';
 import './utils/debugDataLoading';
 // Import Supabase data debug utility (available in console as window.supabaseDebug)
 import './utils/supabaseDataDebug';
-import './RefreshAuthFix.js'; // Temporary fix for auth persistence issue
 
 // Make PWA debug available in console
 if (typeof window !== 'undefined') {
@@ -62,11 +61,29 @@ function AppContent() {
 
 function App() {
   useEffect(() => {
-    // Initialize PWA session management
-    initPWASessionManagement();
-    
-    // Log PWA status
-    console.log('PWA initialized. Debug with: window.pwaDebug()');
+    // Check if the page was reloaded
+    const entries = performance.getEntriesByType("navigation");
+    if (entries.length > 0 && entries[0].type === 'reload') {
+      console.log('Page reloaded, clearing all app data and redirecting to login...');
+      
+      const clearDataAndRedirect = async () => {
+        // Clear all site data
+        await clearAllAppDataAndCookies();
+        
+        // Forcefully sign out from Supabase as a final measure
+        await supabase.auth.signOut();
+        
+        // Redirect to the login page
+        // Using window.location.replace to prevent going back to the broken state
+        window.location.replace('/login');
+      };
+      
+      clearDataAndRedirect();
+    } else {
+      // Initialize PWA session management only on normal navigation
+      initPWASessionManagement();
+      console.log('PWA initialized. Debug with: window.pwaDebug()');
+    }
   }, []);
 
   return (
