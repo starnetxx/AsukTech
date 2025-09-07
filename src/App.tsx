@@ -26,8 +26,19 @@ if (typeof window !== 'undefined') {
 }
 
 function AppContent() {
-  const { user, authUser, isAdmin, loading, shouldShowLogin, sessionLoaded } = useAuth();
+  const { user, authUser, isAdmin, loading, shouldShowLogin, sessionLoaded, logout } = useAuth();
   const [startupWaitExpired, setStartupWaitExpired] = useState(false);
+
+  useEffect(() => {
+    // This effect now handles the refresh logic inside the AuthProvider context
+    const entries = performance.getEntriesByType("navigation");
+    if (entries.length > 0 && entries[0].type === 'reload') {
+      console.log('Page reloaded, triggering full logout...');
+      // Use the logout function from AuthContext which handles all cleanup
+      // We pass `true` to preserve "remember me" data if it exists.
+      logout(true);
+    }
+  }, [logout]);
 
   useEffect(() => {
     const t = setTimeout(() => setStartupWaitExpired(true), 8000);
@@ -61,29 +72,11 @@ function AppContent() {
 
 function App() {
   useEffect(() => {
-    // Check if the page was reloaded
-    const entries = performance.getEntriesByType("navigation");
-    if (entries.length > 0 && entries[0].type === 'reload') {
-      console.log('Page reloaded, clearing all app data and redirecting to login...');
-      
-      const clearDataAndRedirect = async () => {
-        // Clear all site data
-        await clearAllAppDataAndCookies();
-        
-        // Forcefully sign out from Supabase as a final measure
-        await supabase.auth.signOut();
-        
-        // Redirect to the login page
-        // Using window.location.replace to prevent going back to the broken state
-        window.location.replace('/login');
-      };
-      
-      clearDataAndRedirect();
-    } else {
-      // Initialize PWA session management only on normal navigation
-      initPWASessionManagement();
-      console.log('PWA initialized. Debug with: window.pwaDebug()');
-    }
+    // Initialize PWA session management
+    initPWASessionManagement();
+
+    // Log PWA status
+    console.log('PWA initialized. Debug with: window.pwaDebug()');
   }, []);
 
   return (
