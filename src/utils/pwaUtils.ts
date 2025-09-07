@@ -238,36 +238,72 @@ export const clearAllAppDataAndCookies = async () => {
 };
 
 /**
- * Clear all app data and cookies but preserve remember me data
+ * Clears all application data (caches, storage, cookies) BUT preserves the 
+ * 'Remember Me' credentials stored in secure local storage.
  */
-export const clearAllAppDataAndCookiesPreservingRememberMe = async () => {
+export const clearAllAppDataAndCookiesPreservingRememberMe = async (): Promise<void> => {
+  console.log("Attempting to clear all app data while preserving 'Remember Me' credentials...");
   try {
-    // Save remember me data before clearing
-    const rememberMeData = localStorage.getItem('starline_auth_data') || localStorage.getItem('starnetx_auth_data');
-    
-    // Clear caches
+    // 1. Clear Caches
     if ('caches' in window) {
-      const names = await caches.keys();
-      await Promise.all(names.map(name => caches.delete(name)));
+      const keys = await caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+      console.log('All caches cleared.');
     }
 
-    // Clear storages
-    try { localStorage.clear(); } catch {}
-    try { sessionStorage.clear(); } catch {}
-
-    // Restore remember me data if it existed
-    if (rememberMeData) {
-      localStorage.setItem('starline_auth_data', rememberMeData);
-      console.log('Remember me data preserved during logout');
+    // 2. Unregister Service Workers
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+      }
+      console.log('All service workers unregistered.');
     }
 
-    // Clear cookies
-    document.cookie.split(';').forEach((c) => {
-      document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
+    // 3. Clear Local Storage (with exception)
+    if ('localStorage' in window) {
+      const rememberMeData = localStorage.getItem('starline_auth_data');
+      localStorage.clear();
+      if (rememberMeData) {
+        localStorage.setItem('starline_auth_data', rememberMeData);
+        console.log("'Remember Me' data preserved in localStorage.");
+      }
+    }
+
+    // 4. Clear Session Storage
+    if ('sessionStorage' in window) {
+      sessionStorage.clear();
+      console.log('Session storage cleared.');
+    }
+
+    // 5. Clear IndexedDB
+    if ('indexedDB' in window && indexedDB.databases) {
+      const dbs = await indexedDB.databases();
+      dbs.forEach(db => {
+        if (db.name) {
+          indexedDB.deleteDatabase(db.name);
+        }
+      });
+      console.log('All IndexedDB databases cleared.');
+    }
+    
+    // 6. Clear Cookies (same as the full clear)
+    const cookies = document.cookie.split(';');
+    cookies.forEach((cookie) => {
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+      
+      // Clear cookie for current domain
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.${window.location.hostname}`;
     });
-  } catch (e) {
-    console.warn('clearAllAppDataAndCookiesPreservingRememberMe warning:', e);
+    console.log('Cookies cleared.');
+
+  } catch (error) {
+    console.error('Error during app data cleanup (preserving remember me):', error);
   }
+  console.log("Finished clearing app data, 'Remember Me' data was preserved.");
 };
 
 /**

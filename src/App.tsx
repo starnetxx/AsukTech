@@ -4,7 +4,7 @@ import { DataProvider } from './contexts/DataContext';
 import { AuthForm } from './components/auth/AuthForm';
 import { UserDashboard } from './components/user/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { initPWASessionManagement, debugStorage, clearAllAppDataAndCookies } from './utils/pwaUtils';
+import { initPWASessionManagement, debugStorage, clearAllAppDataAndCookiesPreservingRememberMe } from './utils/pwaUtils';
 import { supabase } from './utils/supabase';
 
 // Import auth debug utilities (available in console as window.authDebug)
@@ -70,8 +70,8 @@ function App() {
       console.log('Page reloaded, clearing all app data and redirecting to login...');
       
       const clearDataAndRedirect = async () => {
-        // Clear all site data
-        await clearAllAppDataAndCookies();
+        // Clear all site data, but preserve "Remember Me"
+        await clearAllAppDataAndCookiesPreservingRememberMe();
         
         // Forcefully sign out from Supabase as a final measure
         await supabase.auth.signOut();
