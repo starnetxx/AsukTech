@@ -102,106 +102,112 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f1f1f1] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-green-400/10 to-emerald-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-green-300/10 to-emerald-300/10 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl p-8 border-2 border-[#34A853]/30 shadow-2xl shadow-black/20">
           {/* Subtle loading indicator for auth check */}
           {profileLoading && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
-              <div className="flex items-center gap-3 text-blue-700 text-sm">
-                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-2xl">
+              <div className="flex items-center gap-3 text-green-700 text-sm">
+                <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin"></div>
                 <span className="font-medium">Checking authentication...</span>
               </div>
             </div>
           )}
           
           <div className="text-center mb-8">
-            <div className="w-24 h-24 mx-auto mb-6 overflow-hidden">
-              <img
-                src="/starline-logo.png"
-                alt="Starline Networks"
-                className="w-full h-full object-contain"
-              />
+            <div className="relative w-20 h-20 mx-auto mb-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl shadow-lg"></div>
+              <div className="absolute inset-1 bg-white rounded-xl flex items-center justify-center">
+                <img
+                  src="/starline-logo.png"
+                  alt="AsukTech"
+                  className="w-12 h-12 object-contain"
+                />
+              </div>
             </div>
-            <h1 className={`text-3xl font-extrabold mb-2 tracking-tight ${isAdmin ? 'text-gray-900' : 'text-[#4285F4]'}`}>
-              {isAdmin ? 'Admin' : 'Starline Networks'}
+            <h1 className={`text-3xl font-bold mb-2 tracking-tight ${isAdmin ? 'text-gray-900' : 'text-gray-900'}`}>
+              {isAdmin ? 'Admin Portal' : 'Welcome to AsukTech'}
             </h1>
             <p className="text-gray-600 text-base">
-              {isAdmin ? 'Admin Dashboard Access' : (isLogin ? 'Welcome back!' : 'Create your account')}
+              {isAdmin ? 'Secure admin access' : (isLogin ? 'Sign in to your account' : 'Create your new account')}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              placeholder="Enter your email"
-              required
-            />
-
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={setPassword}
-              placeholder="Enter your password"
-              required
-            />
-
-            {!isLogin && !isAdmin && (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-4">
               <Input
-                label="Phone Number"
-                type="tel"
-                value={phone}
-                onChange={setPhone}
-                placeholder="Enter your phone number (optional)"
+                label="Email Address"
+                type="email"
+                value={email}
+                onChange={setEmail}
+                placeholder="Enter your email address"
+                required
               />
-            )}
 
-            {!isLogin && !isAdmin && (
               <Input
-                label="Referral Code"
-                type="text"
-                value={referralCode}
-                onChange={setReferralCode}
-                placeholder="Enter referral code (optional)"
+                label="Password"
+                type="password"
+                value={password}
+                onChange={setPassword}
+                placeholder="Enter your password"
+                required
               />
-            )}
+
+              {!isLogin && !isAdmin && (
+                <Input
+                  label="Phone Number"
+                  type="tel"
+                  value={phone}
+                  onChange={setPhone}
+                  placeholder="Enter your phone number (optional)"
+                />
+              )}
+
+              {!isLogin && !isAdmin && (
+                <Input
+                  label="Referral Code"
+                  type="text"
+                  value={referralCode}
+                  onChange={setReferralCode}
+                  placeholder="Enter referral code (optional)"
+                />
+              )}
+            </div>
 
             {isLogin && !isAdmin && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 px-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     id="rememberMe"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 text-[#4285F4] bg-white border-gray-300 rounded focus:ring-[#4285F4] focus:ring-2"
+                    className="w-4 h-4 text-[#34A853] bg-white border-gray-300 rounded focus:ring-[#34A853] focus:ring-2"
                   />
                   <label htmlFor="rememberMe" className="text-gray-700 text-sm font-medium cursor-pointer hover:text-gray-900 transition-colors">
                     Remember me
                   </label>
                 </div>
-                {rememberMe && email && password && (
-                  <div className="px-1 text-xs text-green-600 font-medium">
-                    ✓ Credentials saved for quick login
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Forgot Password Link */}
-            {isLogin && (
-              <div className="text-right">
                 <button
                   type="button"
                   onClick={() => setShowForgotPassword(true)}
-                  className="text-sm text-[#4285F4] hover:text-[#3367D6] font-medium transition-colors"
+                  className="text-sm text-[#34A853] hover:text-[#2E7D32] font-medium transition-colors"
                 >
                   Forgot Password?
                 </button>
+              </div>
+            )}
+
+            {isLogin && !isAdmin && rememberMe && email && password && (
+              <div className="text-xs text-green-600 font-medium bg-green-50 px-3 py-2 rounded-lg">
+                ✓ Credentials will be saved for quick login
               </div>
             )}
 
@@ -219,7 +225,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-6 bg-[#4285F4] hover:bg-[#3367D6] disabled:bg-gray-400 text-white font-semibold text-base rounded-2xl transition-all duration-200 shadow-md hover:shadow-lg disabled:cursor-not-allowed"
+              className="w-full py-4 px-6 bg-gradient-to-r from-[#34A853] to-[#2E7D32] hover:from-[#2E7D32] hover:to-[#1B5E20] disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold text-base rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-green-500/25 disabled:cursor-not-allowed disabled:shadow-none transform hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-3">
@@ -227,16 +233,32 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
                   <span>Please wait...</span>
                 </div>
               ) : (
-                (isAdmin ? 'Admin Login' : (isLogin ? 'Sign In' : 'Sign Up'))
+                <span className="flex items-center justify-center gap-2">
+                  {isAdmin ? 'Access Admin Portal' : (isLogin ? 'Sign In to Account' : 'Create New Account')}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </span>
               )}
             </button>
 
             {!isAdmin && (
-              <div className="text-center pt-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-white text-gray-500">or</span>
+                </div>
+              </div>
+            )}
+
+            {!isAdmin && (
+              <div className="text-center">
                 <button
                   type="button"
                   onClick={() => setIsLogin(!isLogin)}
-                  className="text-[#4285F4] hover:text-[#3367D6] text-sm font-medium transition-colors duration-200 hover:underline"
+                  className="inline-flex items-center gap-2 text-[#34A853] hover:text-[#2E7D32] text-sm font-medium transition-all duration-200 hover:underline px-4 py-2 rounded-lg hover:bg-green-50"
                 >
                   {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
                 </button>
@@ -248,20 +270,25 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
 
       {/* Forgot Password Modal */}
       {showForgotPassword && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl p-8 border-2 border-[#34A853]/30 shadow-2xl shadow-black/25 w-full max-w-md">
             <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Reset Password</h2>
-              <p className="text-gray-600">Enter your email address and we'll send you a link to reset your password.</p>
+              <p className="text-gray-600">Enter your email address and we'll send you a secure link to reset your password.</p>
             </div>
 
-            <form onSubmit={handleResetPassword} className="space-y-6">
+            <form onSubmit={handleResetPassword} className="space-y-5">
               <Input
                 label="Email Address"
                 type="email"
                 value={resetEmail}
                 onChange={setResetEmail}
-                placeholder="Enter your email"
+                placeholder="Enter your email address"
                 required
                 className="w-full"
               />
@@ -269,10 +296,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
               {resetMessage && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-2xl">
                   <div className="flex items-center gap-3 text-green-700 text-sm">
-                    <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">✓</span>
+                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
                     </div>
-                    <span>{resetMessage}</span>
+                    <span className="font-medium">{resetMessage}</span>
                   </div>
                 </div>
               )}
@@ -280,15 +309,15 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
               {error && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-2xl">
                   <div className="flex items-center gap-3 text-red-700 text-sm">
-                    <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">!</span>
+                    <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">!</span>
                     </div>
-                    <span>{error}</span>
+                    <span className="font-medium">{error}</span>
                   </div>
                 </div>
               )}
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -297,16 +326,23 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
                     setResetMessage('');
                     setError('');
                   }}
-                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-2xl transition-colors"
+                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={resetLoading || !resetEmail}
-                  className="flex-1 px-6 py-3 bg-[#4285F4] hover:bg-[#3367D6] disabled:bg-gray-300 text-white font-semibold rounded-2xl transition-colors"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-[#34A853] to-[#2E7D32] hover:from-[#2E7D32] hover:to-[#1B5E20] disabled:from-gray-300 disabled:to-gray-400 text-white font-semibold rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 disabled:cursor-not-allowed"
                 >
-                  {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                  {resetLoading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+                      <span>Sending...</span>
+                    </div>
+                  ) : (
+                    'Send Reset Link'
+                  )}
                 </button>
               </div>
             </form>

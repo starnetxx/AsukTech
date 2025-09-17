@@ -58,7 +58,7 @@ export const AdminDashboard: React.FC = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Starline Networks Admin</h1>
+            <h1 className="text-2xl font-bold text-gray-900">AsukTech Admin</h1>
             <Button variant="outline" onClick={logout}>
               Sign Out
             </Button>
@@ -92,7 +92,7 @@ export const AdminDashboard: React.FC = () => {
                       onClick={() => setActivePage(item.id as AdminPage)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
                         activePage === item.id
-                          ? 'bg-blue-100 text-blue-700'
+                          ? 'bg-green-100 text-green-700'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >
@@ -256,8 +256,8 @@ const AdminOverview: React.FC = () => {
 
         <Card className="p-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="text-blue-600" size={24} />
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <Users className="text-green-600" size={24} />
             </div>
             <div>
               <p className="text-sm text-gray-600">Total Users</p>
@@ -348,7 +348,7 @@ const AdminOverview: React.FC = () => {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className="bg-blue-600 h-2 rounded-full"
+                        className="bg-green-600 h-2 rounded-full"
                         style={{ width: `${item.percentage}%` }}
                       ></div>
                     </div>

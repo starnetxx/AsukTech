@@ -131,7 +131,7 @@ export const NotificationManager: React.FC = () => {
       case 'low':
         return <Clock className="text-gray-600" size={16} />;
       default:
-        return <Bell className="text-blue-600" size={16} />;
+        return <Bell className="text-green-600" size={16} />;
     }
   };
 
@@ -146,7 +146,7 @@ export const NotificationManager: React.FC = () => {
       case 'low':
         return 'bg-gray-100 text-gray-700';
       default:
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-green-100 text-green-700';
     }
   };
 
@@ -204,8 +204,8 @@ export const NotificationManager: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Bell className="text-blue-600" size={20} />
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <Bell className="text-green-600" size={20} />
             </div>
             <div>
               <p className="text-sm text-gray-600">Total</p>
@@ -497,7 +497,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({
               label="Title"
               value={formData.title}
               onChange={(value) => setFormData({ ...formData, title: value })}
-              placeholder="e.g., Welcome to Starline Networks!"
+              placeholder="e.g., Welcome to AsukTech!"
               required
             />
 
@@ -509,7 +509,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 placeholder="Main notification message that users will see"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 rows={3}
                 required
               />
@@ -523,7 +523,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Additional details or instructions"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 rows={2}
               />
             </div>
@@ -552,7 +552,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({
                 <select
                   value={formData.target_audience}
                   onChange={(e) => setFormData({ ...formData, target_audience: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                 >
                   <option value="all">All Users</option>
                   <option value="new_users">New Users Only (&lt; 7 days)</option>
@@ -568,7 +568,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({
                 <select
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                 >
                   <option value="low">Low - General info</option>
                   <option value="normal">Normal - Standard updates</option>
@@ -610,7 +610,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({
                   <label
                     htmlFor="show_as_popup"
                     className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${
-                      formData.show_as_popup ? 'bg-blue-500' : 'bg-gray-300'
+                      formData.show_as_popup ? 'bg-green-500' : 'bg-gray-300'
                     }`}
                   >
                     <span

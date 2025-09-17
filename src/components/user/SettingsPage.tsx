@@ -59,7 +59,7 @@ export const SettingsPage: React.FC = () => {
       {/* Hero Section */}
       <div className="text-center space-y-3">
         <div className="w-24 h-24 mx-auto mb-2 max-[400px]:w-20 max-[400px]:h-20">
-          <img src="/starline-logo.png" alt="Starline Networks" className="w-full h-full object-contain" />
+          <img src="/starline-logo.png" alt="AsukTech" className="w-full h-full object-contain" />
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">Settings</h1>
         <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto">Manage your account and preferences</p>
@@ -76,10 +76,10 @@ export const SettingsPage: React.FC = () => {
           <Button
             variant="outline"
             onClick={() => setShowTransactionHistory(true)}
-            className="w-full flex items-center justify-between p-6 h-auto bg-white border border-gray-200 rounded-2xl hover:bg-blue-50 hover:border-[#4285F4]/40 transition-all duration-200 shadow-sm hover:shadow group max-[400px]:p-4"
+            className="w-full flex items-center justify-between p-6 h-auto bg-white border border-gray-200 rounded-2xl hover:bg-green-50 hover:border-[#34A853]/40 transition-all duration-200 shadow-sm hover:shadow group max-[400px]:p-4"
           >
             <div className="flex items-center gap-4 max-[400px]:gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#4285F4] to-[#1A73E8] rounded-2xl flex items-center justify-center shadow-lg max-[400px]:w-10 max-[400px]:h-10">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#34A853] to-[#1B5E20] rounded-2xl flex items-center justify-center shadow-lg max-[400px]:w-10 max-[400px]:h-10">
                 <Receipt className="text-white" size={24} />
               </div>
               <div className="text-left max-[400px]:flex-1">
@@ -87,7 +87,7 @@ export const SettingsPage: React.FC = () => {
                 <p className="text-gray-600 max-[400px]:text-sm">View all your payments and purchases</p>
               </div>
             </div>
-            <ChevronRight className="text-gray-400 group-hover:text-[#4285F4] transition-colors duration-200" size={24} />
+            <ChevronRight className="text-gray-400 group-hover:text-[#34A853] transition-colors duration-200" size={24} />
           </Button>
         </div>
       </div>
@@ -100,7 +100,7 @@ export const SettingsPage: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-6 mb-8 max-[400px]:flex-col max-[400px]:gap-4 max-[400px]:mb-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-[#4285F4] to-[#1A73E8] rounded-3xl flex items-center justify-center shadow-xl border-2 border-white/30 max-[400px]:w-16 max-[400px]:h-16">
+          <div className="w-20 h-20 bg-gradient-to-br from-[#34A853] to-[#1B5E20] rounded-3xl flex items-center justify-center shadow-xl border-2 border-white/30 max-[400px]:w-16 max-[400px]:h-16">
             <span className="text-white text-2xl font-black max-[400px]:text-xl">
               {user?.email?.charAt(0).toUpperCase()}
             </span>
@@ -117,17 +117,17 @@ export const SettingsPage: React.FC = () => {
         <div className="grid grid-cols-2 gap-6 max-[400px]:grid-cols-1 max-[400px]:gap-4">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm max-[400px]:p-4">
             <div className="flex items-center gap-3 mb-3">
-              <CreditCard className="text-[#1A73E8]" size={20} />
+              <CreditCard className="text-[#1B5E20]" size={20} />
               <p className="text-sm text-gray-600 font-medium">Wallet Balance</p>
             </div>
-            <p className="text-2xl font-black text-[#1A73E8] max-[400px]:text-xl">₦{user?.walletBalance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="text-2xl font-black text-[#1B5E20] max-[400px]:text-xl">₦{user?.walletBalance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm max-[400px]:p-4">
             <div className="flex items-center gap-3 mb-3">
-              <User className="text-blue-600" size={20} />
+              <User className="text-green-600" size={20} />
               <p className="text-sm text-gray-600 font-medium">Referral Code</p>
             </div>
-            <p className="text-2xl font-black text-[#1A73E8] max-[400px]:text-xl">{user?.referralCode}</p>
+            <p className="text-2xl font-black text-[#1B5E20] max-[400px]:text-xl">{user?.referralCode}</p>
           </div>
         </div>
       </div>
@@ -143,7 +143,7 @@ export const SettingsPage: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={() => setShowTransactionHistory(true)}
-            className="flex items-center gap-2 bg-[#4285F4] text-white font-semibold rounded-2xl hover:bg-[#3367D6] transition-all duration-200 shadow-sm hover:shadow max-[400px]:w-full max-[400px]:justify-center px-4 py-3"
+            className="flex items-center gap-2 bg-[#34A853] text-white font-semibold rounded-2xl hover:bg-[#2E7D32] transition-all duration-200 shadow-sm hover:shadow max-[400px]:w-full max-[400px]:justify-center px-4 py-3"
           >
             <Receipt size={16} />
             View All Transactions
@@ -169,7 +169,7 @@ export const SettingsPage: React.FC = () => {
                 >
                   <div className="flex items-center justify-between max-[400px]:flex-col max-[400px]:gap-3 max-[400px]:items-start">
                     <div className="flex items-center gap-4 max-[400px]:w-full">
-                      <div className="w-12 h-12 bg-gradient-to-br from-[#4285F4] to-[#1A73E8] rounded-2xl flex items-center justify-center shadow-lg max-[400px]:w-10 max-[400px]:h-10">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#34A853] to-[#1B5E20] rounded-2xl flex items-center justify-center shadow-lg max-[400px]:w-10 max-[400px]:h-10">
                         <Receipt className="text-white" size={20} />
                       </div>
                       <div className="max-[400px]:flex-1">
@@ -241,19 +241,19 @@ export const SettingsPage: React.FC = () => {
         
         <div className="space-y-4">
           <button className="w-full flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group max-[400px]:p-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#4285F4] to-[#1A73E8] rounded-2xl flex items-center justify-center max-[400px]:w-10 max-[400px]:h-10">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#34A853] to-[#1B5E20] rounded-2xl flex items-center justify-center max-[400px]:w-10 max-[400px]:h-10">
               <User className="text-white" size={24} />
             </div>
             <span className="text-gray-900 font-semibold text-lg max-[400px]:text-base">Account Information</span>
-            <ChevronRight className="text-gray-400 group-hover:text-[#4285F4] transition-colors duration-200 ml-auto" size={20} />
+            <ChevronRight className="text-gray-400 group-hover:text-[#34A853] transition-colors duration-200 ml-auto" size={20} />
           </button>
           
           <button className="w-full flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group max-[400px]:p-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#4285F4] to-[#1A73E8] rounded-2xl flex items-center justify-center max-[400px]:w-10 max-[400px]:h-10">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#34A853] to-[#1B5E20] rounded-2xl flex items-center justify-center max-[400px]:w-10 max-[400px]:h-10">
               <Shield className="text-white" size={24} />
             </div>
             <span className="text-gray-900 font-semibold text-lg max-[400px]:text-base">Privacy & Security</span>
-            <ChevronRight className="text-gray-400 group-hover:text-[#4285F4] transition-colors duration-200 ml-auto" size={20} />
+            <ChevronRight className="text-gray-400 group-hover:text-[#34A853] transition-colors duration-200 ml-auto" size={20} />
           </button>
           
           <button className="w-full flex items-center gap-4 p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group max-[400px]:p-4">

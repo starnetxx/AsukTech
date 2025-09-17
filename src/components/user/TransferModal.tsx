@@ -254,15 +254,15 @@ export const TransferModal: React.FC<TransferModalProps> = ({ isOpen, onClose, o
         </div>
 
         {/* Disclaimer */}
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-start gap-2">
-            <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-blue-600 text-xs font-bold">i</span>
+            <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-green-600 text-xs font-bold">i</span>
             </div>
             <div>
-              <p className="text-blue-800 text-sm font-medium">Starline Networks Wallet Transfer</p>
-              <p className="text-blue-700 text-xs mt-1">
-                This feature allows you to transfer funds between Starline Networks wallets only. 
+              <p className="text-green-800 text-sm font-medium">AsukTech Wallet Transfer</p>
+              <p className="text-green-700 text-xs mt-1">
+                This feature allows you to transfer funds between AsukTech wallets only. 
                 You can send money to other users using their email or phone number.
               </p>
             </div>
@@ -311,10 +311,10 @@ export const TransferModal: React.FC<TransferModalProps> = ({ isOpen, onClose, o
 
         {step === 'amount' && recipientUser && (
           <div className="space-y-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
+            <div className="p-4 bg-green-50 rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User size={20} className="text-blue-600" />
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <User size={20} className="text-green-600" />
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">

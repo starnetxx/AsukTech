@@ -44,7 +44,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       case 'alert':
         return 'from-red-500 to-red-600';
       case 'info':
-        return 'from-blue-500 to-blue-600';
+        return 'from-green-500 to-green-600';
       default:
         return 'from-green-500 to-green-600';
     }
@@ -55,7 +55,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       case 'alert':
         return 'from-red-500 to-red-600 hover:from-red-600 hover:to-red-700';
       case 'info':
-        return 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700';
+        return 'from-green-500 to-green-600 hover:from-green-600 hover:to-green-700';
       default:
         return 'from-green-500 to-green-600 hover:from-green-600 hover:to-green-700';
     }

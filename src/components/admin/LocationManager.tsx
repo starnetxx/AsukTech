@@ -168,7 +168,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ location, onSubmit, onCance
             label="Location Name"
             value={formData.name}
             onChange={(value) => setFormData({ ...formData, name: value })}
-            placeholder="e.g., Starline Networks 3"
+            placeholder="e.g., AsukTech 3"
             required
           />
 
@@ -176,7 +176,7 @@ const LocationForm: React.FC<LocationFormProps> = ({ location, onSubmit, onCance
             label="WiFi Network Name"
             value={formData.wifiName}
             onChange={(value) => setFormData({ ...formData, wifiName: value })}
-            placeholder="e.g., Starline Networks 3"
+            placeholder="e.g., AsukTech 3"
             required
           />
 

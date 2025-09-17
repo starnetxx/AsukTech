@@ -60,7 +60,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
       case 'transfer_received':
         return <ArrowDown size={14} className="text-green-600" />;
       case 'wallet_funding':
-        return <ArrowDown size={14} className="text-blue-600" />;
+        return <ArrowDown size={14} className="text-green-600" />;
       case 'plan_purchase':
         return <Wifi size={14} className="text-purple-600" />;
       default:
@@ -117,7 +117,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
   if (recentTransactions.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="w-16 h-16 bg-gradient-to-br from-[#4285F4] to-[#1A73E8] rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+        <div className="w-16 h-16 bg-gradient-to-br from-[#34A853] to-[#1B5E20] rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg">
           <TrendingUp className="text-white" size={28} />
         </div>
         <h4 className="font-bold text-gray-900 mb-2 text-lg">Start Your Journey</h4>
@@ -151,7 +151,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
           return (
             <div 
               key={transaction.id} 
-              className="group relative bg-gray-50 hover:bg-blue-50 p-4 rounded-2xl border border-gray-100 hover:border-[#4285F4]/20 transition-all duration-300 hover:shadow-sm max-[450px]:p-3 max-[340px]:p-2.5"
+              className="group relative bg-gray-50 hover:bg-green-50 p-4 rounded-2xl border border-gray-100 hover:border-[#34A853]/20 transition-all duration-300 hover:shadow-sm max-[450px]:p-3 max-[340px]:p-2.5"
             >
               {/* Status indicator dot */}
               <div className={`absolute left-4 top-4 w-3 h-3 rounded-full ${
@@ -187,7 +187,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
                       </div>
                       {transaction.type === 'plan_purchase' && transaction.status === 'active' && transaction.mikrotik_username && (
                         <div className="mt-2 max-[340px]:mt-1.5">
-                          <span className="text-xs text-[#4285F4] font-medium bg-blue-50 px-2 py-1 rounded-lg inline-block max-[340px]:text-[11px] max-[340px]:px-1.5 max-[340px]:py-0.5">
+                          <span className="text-xs text-[#34A853] font-medium bg-green-50 px-2 py-1 rounded-lg inline-block max-[340px]:text-[11px] max-[340px]:px-1.5 max-[340px]:py-0.5">
                             User: {transaction.mikrotik_username}
                           </span>
                         </div>
@@ -219,7 +219,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({ onNaviga
         <div className="pt-4 border-t border-gray-100">
           <button 
             onClick={onNavigateToHistory}
-            className="w-full bg-gradient-to-r from-[#4285F4] to-[#1A73E8] hover:from-[#3367D6] hover:to-[#1557B0] text-white p-3 rounded-2xl font-semibold transition-all duration-300 hover:shadow-lg flex items-center justify-center space-x-2 group"
+            className="w-full bg-gradient-to-r from-[#34A853] to-[#1B5E20] hover:from-[#2E7D32] hover:to-[#0D4F17] text-white p-3 rounded-2xl font-semibold transition-all duration-300 hover:shadow-lg flex items-center justify-center space-x-2 group"
           >
             <span>View All Transactions</span>
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />

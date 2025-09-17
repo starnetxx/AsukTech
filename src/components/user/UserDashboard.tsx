@@ -12,7 +12,7 @@ import { ReferralPage } from './ReferralPage';
 import { SettingsPage } from './SettingsPage';
 import { NotificationBanner } from './NotificationBanner';
 import { TransferModal } from './TransferModal';
-import { Bell, ChevronDown, LogOut, Eye, EyeOff, Copy, Smartphone, CreditCard, ArrowUpRight, Clock, Send } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, Eye, EyeOff, Copy, Smartphone, CreditCard, ArrowUpRight, Clock, Send, TrendingUp } from 'lucide-react';
 
 type ActivePage = 'home' | 'plans' | 'referrals' | 'settings' | 'virtual-account';
 
@@ -50,96 +50,110 @@ export const UserDashboard: React.FC = () => {
           <div className="space-y-6">
             <NotificationBanner />
 
-            {/* Wallet Card - Refined banking style */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 mx-4 relative border border-gray-100">
-              {/* Savings tab notch */}
-              <div className="absolute -top-3 left-6 right-6 mx-auto w-28 text-center">
-                <div className="inline-block bg-[#4285F4] text-white text-xs font-bold rounded-t-xl rounded-b-lg px-3 py-1 shadow-md">
-                  WALLET
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mb-4 mt-2">
-                <div>
-                  <p className="text-gray-600 text-sm font-medium">Available balance</p>
-                </div>
-                <button
-                  onClick={() => setShowBalance(!showBalance)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  title={showBalance ? 'Hide balance' : 'Show balance'}
-                >
-                  {showBalance ? <Eye size={20} className="text-gray-600" /> : <EyeOff size={20} className="text-gray-600" />}
-                </button>
-              </div>
-
-              <div className="mb-4">
-                <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                  {showBalance 
-                    ? `₦${(user?.walletBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : '₦****.**'}
-                </h2>
-              </div>
-
-              {user?.virtualAccountNumber ? (
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-gray-600 text-sm">Account number</p>
-                    <p className="text-blue-700 font-mono font-semibold tracking-wide">
-                      {user.virtualAccountNumber}
-                    </p>
-                    {user?.virtualAccountBankName && (
-                      <p className="text-gray-600 text-xs mt-1">Bank: <span className="font-medium text-gray-800">{user.virtualAccountBankName}</span></p>
-                    )}
+            {/* Premium Wallet Card */}
+            <div className="mx-4 relative">
+              <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100/50">
+                {/* Balance Section */}
+                <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-br from-gray-50/50 to-white">
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-gray-600 text-sm font-medium">Available Balance</p>
+                      <button
+                        onClick={() => setShowBalance(!showBalance)}
+                        className="p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200"
+                        title={showBalance ? 'Hide balance' : 'Show balance'}
+                      >
+                        {showBalance ? <Eye size={16} className="text-gray-600" /> : <EyeOff size={16} className="text-gray-600" />}
+                      </button>
+                    </div>
+                    <h2 className="text-2xl min-[320px]:text-3xl min-[375px]:text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight">
+                      {showBalance 
+                        ? `₦${(user?.walletBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : '₦****.**'}
+                    </h2>
                   </div>
-                  <button
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(user.virtualAccountNumber as string);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    title="Copy account number"
-                    aria-label="Copy account number"
-                  >
-                    <Copy size={16} className={copied ? 'text-green-600' : 'text-gray-600'} />
-                  </button>
-                </div>
-              ) : (
-                <div
-                  className="flex items-center justify-between mb-2 rounded-xl bg-amber-50 border border-amber-200 p-4 hover:bg-amber-100 cursor-pointer transition-colors"
-                  onClick={() => setActivePage('virtual-account')}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActivePage('virtual-account'); } }}
-                  title="Create virtual account"
-                  aria-label="Create virtual account"
-                >
-                  <div className="pr-3">
-                    <p className="text-amber-900 text-sm">Create a virtual account to fund your wallet.</p>
-                  </div>
-                  <div className="text-amber-900 font-semibold flex items-center gap-1">
-                    Create
-                    <ArrowUpRight size={16} />
-                  </div>
-                </div>
-              )}
 
-              {/* Transfer Button */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <button
-                  onClick={() => setShowTransferModal(true)}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-[#4285F4] hover:bg-[#3367D6] text-white rounded-xl font-semibold transition-colors"
-                >
-                  <Send size={16} />
-                  Transfer Funds
-                </button>
-              </div>
+                  {/* Account Details or Creation Prompt */}
+                  {user?.virtualAccountNumber ? (
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-3 sm:p-4 border border-green-100 mb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0 mr-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Smartphone size={14} className="text-green-600" />
+                            <p className="text-green-900 text-xs font-semibold">Virtual Account</p>
+                          </div>
+                          <p className="text-green-800 font-mono text-sm font-bold tracking-wide mb-1 break-all">
+                            {user.virtualAccountNumber}
+                          </p>
+                          {user?.virtualAccountBankName && (
+                            <p className="text-green-700 text-xs">
+                              <span className="font-medium">{user.virtualAccountBankName}</span>
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(user.virtualAccountNumber as string);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          }}
+                          className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 flex-shrink-0"
+                          title="Copy account number"
+                          aria-label="Copy account number"
+                        >
+                          <Copy size={16} className={copied ? 'text-green-200' : 'text-white'} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-3 sm:p-4 border border-green-200 hover:from-green-100 hover:to-emerald-100 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md mb-3"
+                      onClick={() => setActivePage('virtual-account')}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActivePage('virtual-account'); } }}
+                      title="Setup virtual account"
+                      aria-label="Setup virtual account"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                            <Smartphone size={18} className="text-white" />
+                          </div>
+                          <div>
+                            <p className="text-green-900 font-semibold text-sm mb-0.5">Setup Account</p>
+                            <p className="text-green-800 text-xs">Enable instant deposits</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 text-green-900 font-semibold">
+                          <span className="text-xs">Setup</span>
+                          <ArrowUpRight size={16} className="transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-              {/* Dots indicator */}
-              <div className="flex justify-center space-x-2 mt-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 sm:gap-3">
+                    <button
+                      onClick={() => setShowTransferModal(true)}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 sm:py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 text-xs sm:text-sm"
+                    >
+                      <Send size={14} />
+                      <span>Send</span>
+                    </button>
+                    <button
+                      onClick={() => setActivePage('virtual-account')}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 sm:py-3 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 text-xs sm:text-sm"
+                    >
+                      <TrendingUp size={14} />
+                      <span>Add Funds</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Decorative Elements */}
+                <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-green-500/5 to-emerald-500/5 rounded-full blur-2xl"></div>
               </div>
             </div>
 
@@ -147,7 +161,7 @@ export const UserDashboard: React.FC = () => {
 
             {/* Upgrade Account - Redesigned */}
             <div className="mx-4">
-              <div className="relative overflow-hidden bg-gradient-to-br from-[#4285F4] via-[#3367D6] to-[#1A73E8] rounded-3xl p-6 shadow-xl">
+              <div className="relative overflow-hidden bg-gradient-to-br from-[#34A853] via-[#2E7D32] to-[#1B5E20] rounded-3xl p-6 shadow-xl">
                 {/* Background Pattern */}
                 <div className="absolute inset-0">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
@@ -181,10 +195,10 @@ export const UserDashboard: React.FC = () => {
             <div className="mx-4">
               <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-5 border-b border-gray-100 max-[380px]:px-4 max-[380px]:py-4">
+                <div className="bg-gradient-to-r from-gray-50 to-green-50 px-6 py-5 border-b border-gray-100 max-[380px]:px-4 max-[380px]:py-4">
                   <div className="flex items-center justify-between max-[380px]:flex-col max-[380px]:items-start max-[380px]:gap-2">
                     <div className="flex items-center space-x-3 max-[380px]:space-x-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#4285F4] to-[#1A73E8] rounded-2xl flex items-center justify-center shadow-md max-[380px]:w-9 max-[380px]:h-9">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#34A853] to-[#1B5E20] rounded-2xl flex items-center justify-center shadow-md max-[380px]:w-9 max-[380px]:h-9">
                         <Clock size={18} className="text-white" />
                       </div>
                       <div>
@@ -194,7 +208,7 @@ export const UserDashboard: React.FC = () => {
                     </div>
                     <button 
                       onClick={() => setActivePage('settings')}
-                      className="text-[#4285F4] text-sm font-semibold hover:text-[#3367D6] transition-colors flex items-center space-x-1 max-[380px]:text-xs"
+                      className="text-[#34A853] text-sm font-semibold hover:text-[#2E7D32] transition-colors flex items-center space-x-1 max-[380px]:text-xs"
                     >
                       <span>See all</span>
                       <ArrowUpRight size={12} />
@@ -215,7 +229,7 @@ export const UserDashboard: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900">Quick Services</h3>
                 <button 
                   onClick={() => setActivePage('plans')}
-                  className="text-[#4285F4] text-sm font-medium flex items-center gap-1"
+                  className="text-[#34A853] text-sm font-medium flex items-center gap-1"
                 >
                   View all
                   <ArrowUpRight size={16} />
@@ -245,7 +259,7 @@ export const UserDashboard: React.FC = () => {
             <div className="mx-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Popular Plans</h3>
-                <div className="text-blue-600 text-sm font-medium bg-blue-50 px-3 py-1 rounded-full">
+                <div className="text-green-600 text-sm font-medium bg-green-50 px-3 py-1 rounded-full">
                   Save up to 20%
                 </div>
               </div>
@@ -272,10 +286,10 @@ export const UserDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#4285F4]">
+    <div className="min-h-screen bg-[#34A853]">
       <div className="max-w-md mx-auto bg-[#f1f1f1] min-h-screen relative">
         {/* Header */}
-        <div className="bg-gradient-to-br from-[#4285F4] via-[#3367D6] to-[#1A73E8] px-3 sm:px-4 pt-8 sm:pt-10 pb-7 sm:pb-8 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-[#34A853] via-[#2E7D32] to-[#1B5E20] px-3 sm:px-4 pt-8 sm:pt-10 pb-7 sm:pb-8 relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 bg-white/10 rounded-b-3xl"></div>
           
@@ -287,7 +301,7 @@ export const UserDashboard: React.FC = () => {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 sm:h-12 sm:w-12 bg-white rounded-xl flex items-center justify-center shadow-md">
-                  <img src="/starline-logo.png" alt="Starline Networks" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
+                  <img src="/starline-logo.png" alt="AsukTech" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-white/90 text-xs">Welcome</span>
