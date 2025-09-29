@@ -75,7 +75,7 @@ export const LandingPage: React.FC = () => {
               <a href="/login" className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#34A853] hover:bg-[#2E7D32] font-semibold shadow-lg shadow-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#34A853]/60">
                 Create account
               </a>
-              <a href="/AsukTek.apk" download className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/10 border border-white/15 hover:bg-white/15 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
+              <a href="https://xgvxtnvdxqqeehjrvkwr.supabase.co/storage/v1/object/public/asuktek/AsukTek.apk" download className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white/10 border border-white/15 hover:bg-white/15 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
                 Download App
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 10l5 5m0 0l5-5m-5 5V3" />
