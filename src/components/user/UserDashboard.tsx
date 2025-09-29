@@ -301,7 +301,7 @@ export const UserDashboard: React.FC = () => {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 sm:h-12 sm:w-12 bg-white rounded-xl flex items-center justify-center shadow-md">
-                  <img src="/starline-logo.png" alt="AsukTech" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
+                  <img src="/starline-logo.png" alt="AsukTek" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-white/90 text-xs">Welcome</span>

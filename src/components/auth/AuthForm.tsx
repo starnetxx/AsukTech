@@ -127,13 +127,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ isAdmin = false }) => {
               <div className="absolute inset-1 bg-white rounded-xl flex items-center justify-center">
                 <img
                   src="/starline-logo.png"
-                  alt="AsukTech"
+                  alt="AsukTek"
                   className="w-12 h-12 object-contain"
                 />
               </div>
             </div>
             <h1 className={`text-3xl font-bold mb-2 tracking-tight ${isAdmin ? 'text-gray-900' : 'text-gray-900'}`}>
-              {isAdmin ? 'Admin Portal' : 'Welcome to AsukTech'}
+              {isAdmin ? 'Admin Portal' : 'Welcome to AsukTek'}
             </h1>
             <p className="text-gray-600 text-base">
               {isAdmin ? 'Secure admin access' : (isLogin ? 'Sign in to your account' : 'Create your new account')}

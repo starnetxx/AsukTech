@@ -260,9 +260,9 @@ export const TransferModal: React.FC<TransferModalProps> = ({ isOpen, onClose, o
               <span className="text-green-600 text-xs font-bold">i</span>
             </div>
             <div>
-              <p className="text-green-800 text-sm font-medium">AsukTech Wallet Transfer</p>
+            <p className="text-green-800 text-sm font-medium">AsukTek Wallet Transfer</p>
               <p className="text-green-700 text-xs mt-1">
-                This feature allows you to transfer funds between AsukTech wallets only. 
+                This feature allows you to transfer funds between AsukTek wallets only. 
                 You can send money to other users using their email or phone number.
               </p>
             </div>

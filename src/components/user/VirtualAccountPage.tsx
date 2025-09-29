@@ -384,7 +384,7 @@ export const VirtualAccountPage: React.FC<VirtualAccountPageProps> = ({ onBack }
                     <p className="text-lg font-bold text-gray-900">
                       {(virtualAccount?.id && user?.firstName && user?.lastName)
                         ? `${user.firstName} ${user.lastName}`
-                        : `${formData.firstName} ${formData.lastName}`} - AsukTech
+                        : `${formData.firstName} ${formData.lastName}`} - AsukTek
                     </p>
                   </div>
 

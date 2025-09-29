@@ -26,7 +26,7 @@ export const PurchaseReceiptModal: React.FC<PurchaseReceiptModalProps> = ({ purc
     // Use A4 portrait, small margins, and compact scaling so content fits on one page
     const opt = {
       margin: [0.2, 0.2, 0.2, 0.2],
-      filename: `AsukTech-Receipt-${purchase.id}.pdf`,
+      filename: `AsukTek-Receipt-${purchase.id}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
@@ -71,7 +71,7 @@ export const PurchaseReceiptModal: React.FC<PurchaseReceiptModalProps> = ({ purc
         <div id="receipt-content" className="p-4 sm:p-6 text-xs sm:text-sm leading-tight space-y-3 sm:space-y-4 overflow-y-auto flex-1">
           {/* Header */}
           <div className="text-center mb-4 sm:mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-blue-600 mb-1 sm:mb-2">AsukTech</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-blue-600 mb-1 sm:mb-2">AsukTek</h1>
             <p className="text-gray-600 text-xs sm:text-base">Internet Service Receipt</p>
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mt-3 sm:mt-4 mb-1 sm:mb-2">
               <span className="text-green-600 text-xl sm:text-2xl">✓</span>

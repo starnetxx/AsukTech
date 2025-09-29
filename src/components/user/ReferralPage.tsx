@@ -181,7 +181,7 @@ export const ReferralPage: React.FC = () => {
       {/* Hero Section */}
       <div className="text-center space-y-3">
         <div className="w-24 h-24 mx-auto mb-2">
-          <img src="/starline-logo.png" alt="AsukTech" className="w-full h-full object-contain" />
+          <img src="/starline-logo.png" alt="AsukTek" className="w-full h-full object-contain" />
         </div>
         <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">
           Refer & Earn

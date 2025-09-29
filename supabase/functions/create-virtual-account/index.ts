@@ -146,7 +146,7 @@ serve(async (req) => {
       firstname: effectiveFirstName,
       lastname: effectiveLastName,
       phonenumber: effectivePhone || undefined,
-      narration: `${effectiveFirstName} ${effectiveLastName} - AsukTech`,
+      narration: `${effectiveFirstName} ${effectiveLastName} - AsukTek`,
       // Flutterwave virtual accounts are NGN only
       currency: 'NGN',
       ...(wantsPermanent ? {} : { amount: Number(requestData.amount) })
