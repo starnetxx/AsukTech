@@ -12,6 +12,17 @@ import { User, Wifi, LogOut, ChevronLeft, ChevronRight, Receipt, Settings, Credi
 export const SettingsPage: React.FC = () => {
   const { user, logout } = useAuth();
   const { getUserPurchases } = useData();
+
+  const handleLogout = async () => {
+    try {
+      console.log('Settings logout clicked - clearing session...');
+      await logout();
+    } catch (error) {
+      console.error('Error during settings logout:', error);
+      // Force redirect even if logout fails
+      window.location.replace('/login');
+    }
+  };
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [showTransactionHistory, setShowTransactionHistory] = useState(false);
@@ -278,7 +289,7 @@ export const SettingsPage: React.FC = () => {
       <div className="text-center mb-8">
         <Button
           variant="outline"
-          onClick={logout}
+          onClick={handleLogout}
           className="w-full max-w-md flex items-center justify-center gap-3 py-4 px-8 bg-white text-red-600 border border-red-200 hover:bg-red-50 rounded-2xl font-semibold transition-all duration-200 shadow-sm hover:shadow max-[400px]:w-full max-[400px]:justify-center"
         >
           <LogOut size={20} />

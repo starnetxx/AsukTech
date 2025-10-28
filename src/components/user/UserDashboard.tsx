@@ -20,6 +20,17 @@ export const UserDashboard: React.FC = () => {
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const { user, refreshSession, logout } = useAuth();
   const { getUserPurchases, refreshData } = useData();
+
+  const handleLogout = async () => {
+    try {
+      console.log('User logout clicked - clearing session...');
+      await logout();
+    } catch (error) {
+      console.error('Error during user logout:', error);
+      // Force redirect even if logout fails
+      window.location.replace('/login');
+    }
+  };
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { isOnline, isSlow } = useNetworkStatus();
   const [showBalance, setShowBalance] = useState(true);
@@ -310,7 +321,7 @@ export const UserDashboard: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-white text-red-600 rounded-xl sm:rounded-2xl font-semibold shadow-sm border border-red-100 hover:bg-red-50 transition-all duration-200"
                   title="Logout"
                 >

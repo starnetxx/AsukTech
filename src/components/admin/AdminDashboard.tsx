@@ -24,6 +24,17 @@ export const AdminDashboard: React.FC = () => {
   const [activePage, setActivePage] = useState<AdminPage>('overview');
   const { logout } = useAuth();
 
+  const handleLogout = async () => {
+    try {
+      console.log('Admin logout clicked - clearing session...');
+      await logout();
+    } catch (error) {
+      console.error('Error during admin logout:', error);
+      // Force redirect even if logout fails
+      window.location.replace('/login');
+    }
+  };
+
   const renderContent = () => {
     switch (activePage) {
       case 'overview':
@@ -59,7 +70,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <h1 className="text-2xl font-bold text-gray-900">AsukTek Admin</h1>
-            <Button variant="outline" onClick={logout}>
+            <Button variant="outline" onClick={handleLogout}>
               Sign Out
             </Button>
           </div>
