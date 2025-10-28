@@ -5,8 +5,8 @@ import { AuthForm } from './components/auth/AuthForm';
 import { LandingPage } from './components/LandingPage';
 import { UserDashboard } from './components/user/UserDashboard';
 import { AdminDashboard } from './components/admin/AdminDashboard';
-import { initPWASessionManagement, debugStorage, clearAllAppDataAndCookiesPreservingRememberMe } from './utils/pwaUtils';
-import { supabase } from './utils/supabase';
+import { initPWASessionManagement, debugStorage } from './utils/pwaUtils';
+import { clearSessionAndRedirect } from './utils/sessionClear';
 
 // Import auth debug utilities (available in console as window.authDebug)
 import './utils/authDebug';
@@ -68,25 +68,19 @@ function App() {
   const [isHandlingRefresh, setIsHandlingRefresh] = useState(false);
 
   useEffect(() => {
-    // Check if the page was reloaded
+    // Check if the page was refreshed
     const entries = performance.getEntriesByType("navigation");
-    if (entries.length > 0 && entries[0].type === 'reload') {
+    const isRefresh = entries.length > 0 && (entries[0] as PerformanceNavigationTiming).type === "reload";
+    
+    if (isRefresh) {
       setIsHandlingRefresh(true);
-      console.log('Page reloaded, clearing all app data and redirecting to login...');
+      console.log('Page refreshed - clearing all data and redirecting to login...');
       
-      const clearDataAndRedirect = async () => {
-        // Clear all site data, but preserve "Remember Me"
-        await clearAllAppDataAndCookiesPreservingRememberMe();
-        
-        // Forcefully sign out from Supabase as a final measure
-        await supabase.auth.signOut();
-        
-        // Redirect to the login page
-        // Using window.location.replace to prevent going back to the broken state
-        window.location.replace('/login');
+      const clearAndRedirect = async () => {
+        await clearSessionAndRedirect();
       };
       
-      clearDataAndRedirect();
+      clearAndRedirect();
     } else {
       // Initialize PWA session management only on normal navigation
       initPWASessionManagement();
@@ -99,7 +93,7 @@ function App() {
       <div className="min-h-screen bg-[#34A853] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-          <div className="text-white text-xl">Resetting Session...</div>
+          <div className="text-white text-xl">Clearing session data...</div>
         </div>
       </div>
     );

@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User as AuthUser } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
 import { User } from '../types';
-import { clearAllAppDataAndCookies, clearAllAppDataAndCookiesPreservingRememberMe } from '../utils/pwaUtils';
+
+import { clearSessionAndRedirect } from '../utils/sessionClear';
 
 interface AuthContextType {
   user: User | null;
@@ -74,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const [lastProfileFetch, setLastProfileFetch] = useState<number>(0);
   const [isRefreshingSession, setIsRefreshingSession] = useState(false);
-  const [sessionStartTime, setSessionStartTime] = useState<number>(0);
+
 
   // Clear all auth data from storage (except remember me credentials)
   const clearAllAuthData = () => {
@@ -126,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Supabase configuration is invalid, auth will likely fail');
     }
 
-    // Get initial session with timeout protection
+    // Get initial session with improved restoration
     const getInitialSession = async () => {
       try {
         console.log('Starting initial auth session check...');
@@ -136,63 +137,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           console.error('Error getting session:', error);
-          setAuthUser(null);
-          setUser(null);
-          setLoading(false);
-          setInitialAuthCheck(true);
-          setSessionLoaded(true);
+          if (mounted) {
+            setAuthUser(null);
+            setUser(null);
+            setLoading(false);
+            setInitialAuthCheck(true);
+            setSessionLoaded(true);
+          }
           return;
         }
         
         if (session?.user) {
           console.log('Found existing session for:', session.user.email);
           
-          // Check if this is a page refresh using performance API (recommended method)
-          const perfEntries = performance.getEntriesByType("navigation");
-          let isRefresh = perfEntries.length > 0 && (perfEntries[0] as PerformanceNavigationTiming).type === "reload";
-          
-          // Fallback: Use sessionStorage method if performance API doesn't work
-          if (!isRefresh) {
-            if (sessionStorage.getItem("reloaded")) {
-              isRefresh = true;
-              sessionStorage.removeItem("reloaded");
-            } else {
-              sessionStorage.setItem("reloaded", "true");
+          if (mounted) {
+            setAuthUser(session.user);
+            setSessionLoaded(true);
+            setInitialAuthCheck(true);
+            
+            // Fetch user profile with better error handling
+            try {
+              await fetchUserProfile(session.user.id, false);
+              console.log('Profile loaded successfully from existing session');
+            } catch (profileError) {
+              console.warn('Profile fetch failed, using minimal profile:', profileError);
+              const minimalProfile = createMinimalUserProfile(session.user);
+              setUser(minimalProfile);
+              setIsAdmin(false);
+            } finally {
+              setLoading(false);
             }
           }
-          
-          console.log('Is page refresh:', isRefresh);
-          
-          if (isRefresh) {
-            // User is logged in and page was refreshed - trigger logout
-            console.log('User is authenticated and page was refreshed, triggering logout...');
-            await logout(true); // Preserve remember me data
-            return;
-          } else {
-            // User is authenticated but not a refresh, load profile normally
-            console.log('User is authenticated but not a refresh, loading profile...');
-          setAuthUser(session.user);
-          setSessionLoaded(true);
-          
-          // Fetch user profile
-          fetchUserProfileWithTimeout(session.user.id)
-            .then(() => {
-              console.log('Profile loaded from existing session');
-            })
-            .finally(() => {
-              if (mounted) {
-                setLoading(false);
-                setInitialAuthCheck(true);
-              }
-            });
-          }
         } else {
-          console.log('No existing session found - user not logged in, skipping logout on refresh');
-          setAuthUser(null);
-          setUser(null);
-          setLoading(false);
-          setInitialAuthCheck(true);
-          setSessionLoaded(true);
+          console.log('No existing session found');
+          if (mounted) {
+            setAuthUser(null);
+            setUser(null);
+            setLoading(false);
+            setInitialAuthCheck(true);
+            setSessionLoaded(true);
+          }
         }
       } catch (error) {
         console.error('Unexpected error in getInitialSession:', error);
@@ -214,58 +198,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Auth state changed:', event, session?.user?.email);
 
         // Handle different auth events
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        if (event === 'SIGNED_IN') {
           if (session?.user) {
+            console.log('User signed in, loading profile...');
             setAuthUser(session.user);
             setSessionLoaded(true);
+            setInitialAuthCheck(true);
             
-            // Fetch profile without blocking
-            fetchUserProfileWithTimeout(session.user.id)
-              .then(() => {
-                console.log('Profile loaded after auth change');
-              })
-              .finally(() => {
-                if (mounted) {
-                  setLoading(false);
-                  setInitialAuthCheck(true);
-                }
-              });
+            try {
+              await fetchUserProfile(session.user.id, true); // Force refresh on sign in
+              console.log('Profile loaded after sign in');
+            } catch (profileError) {
+              console.warn('Profile fetch failed on sign in:', profileError);
+              const minimalProfile = createMinimalUserProfile(session.user);
+              setUser(minimalProfile);
+              setIsAdmin(false);
+            } finally {
+              setLoading(false);
+            }
+          }
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed, session maintained');
+          // Don't reload profile on token refresh, just ensure auth state is correct
+          if (session?.user && !authUser) {
+            setAuthUser(session.user);
+            setSessionLoaded(true);
           }
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setAuthUser(null);
           setUser(null);
           setIsAdmin(false);
           setLoading(false);
           setInitialAuthCheck(true);
           setSessionLoaded(true);
-        } else if (event === 'INITIAL_SESSION') {
-          // This event is fired when the session is restored from localStorage
-          if (session?.user) {
-            console.log('Initial session restored:', session.user.email);
-            setAuthUser(session.user);
-            setSessionLoaded(true);
-            
-            fetchUserProfileWithTimeout(session.user.id)
-            .finally(() => {
-              // Always set loading to false after profile attempt
-              setLoading(false);
-            })
-            .catch((profileError) => {
-              console.warn('Profile fetch failed on initial session:', profileError);
-              const minimalProfile = createMinimalUserProfile(session.user);
-              setUser(minimalProfile);
-              setIsAdmin(false);
-            }).finally(() => {
-              if (mounted) {
-                setLoading(false);
-                setInitialAuthCheck(true);
-              }
-            });
-          } else {
-            setLoading(false);
-            setInitialAuthCheck(true);
-            setSessionLoaded(true);
-          }
         }
       } catch (error) {
         console.error('Error in auth state change:', error);
@@ -279,51 +245,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Start the initial session check
     getInitialSession();
-    
-    // Failsafe: If still loading after 10 seconds, force clear loading state
-    const failsafeTimeout = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn('Auth check taking too long, forcing loading state to false');
-        setLoading(false);
-        setSessionLoaded(true);
-        setInitialAuthCheck(true);
-      }
-    }, 10000);
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      clearTimeout(failsafeTimeout);
     };
   }, []);
 
-  // Add network status monitoring and visibility change handling
+  // Simple session management - clear data on browser close
   useEffect(() => {
     const handleOnline = () => {
-      console.log('Network connection restored, attempting to recover profile...');
-      if (authUser?.id) {
-        // Force refresh profile when coming back online
-        setTimeout(() => {
-          void fetchUserProfileWithTimeout(authUser.id, true);
-        }, 1000);
-      }
+      console.log('Network connection restored');
     };
 
     const handleOffline = () => {
       console.log('Network connection lost');
     };
-    
-    const handleVisibilityChange = (event: CustomEvent) => {
-      if (event.detail?.visible && authUser?.id) {
-        console.log('App became visible, checking session freshness...');
-        const timeSinceLastFetch = Date.now() - lastProfileFetch;
-        // If profile is older than 5 minutes, refresh it
-        if (timeSinceLastFetch > 5 * 60 * 1000) {
-          console.log('Profile data is stale, refreshing...');
-          void fetchUserProfileWithTimeout(authUser.id, true);
-        }
-      }
+
+    // Clear data when user closes browser or navigates away
+    const handleBeforeUnload = () => {
+      console.log('Browser closing/navigating away - clearing session data');
+      localStorage.clear();
+      sessionStorage.clear();
     };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('beforeunload', handleBeforeUnload);
     
     const handleOnlineStatusChange = (event: CustomEvent) => {
       if (event.detail?.online && authUser?.id) {
@@ -344,20 +292,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    window.addEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
-    window.addEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
-    window.addEventListener('sw-sync-data', handleSyncData);
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('app-visibility-changed', handleVisibilityChange as EventListener);
-      window.removeEventListener('app-online-status-changed', handleOnlineStatusChange as EventListener);
-      window.removeEventListener('sw-sync-data', handleSyncData);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [authUser?.id, lastProfileFetch, isRefreshingSession]);
+  }, []);
 
   // Add periodic connection health check
   useEffect(() => {
@@ -380,29 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(interval);
   }, [authUser?.id, user]);
 
-  // Add 5-minute session timeout
-  useEffect(() => {
-    if (!authUser?.id) return;
-    
-    // Set session start time when user logs in
-    if (sessionStartTime === 0) {
-      setSessionStartTime(Date.now());
-    }
-    
-    const sessionTimeout = setInterval(() => {
-      const now = Date.now();
-      const sessionDuration = now - sessionStartTime;
-      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
-      
-      if (sessionDuration >= fiveMinutes) {
-        console.log('Session expired after 5 minutes, logging out...');
-        logout();
-        clearInterval(sessionTimeout);
-      }
-    }, 10000); // Check every 10 seconds
-    
-    return () => clearInterval(sessionTimeout);
-  }, [authUser?.id, sessionStartTime]);
+  // Session timeout removed - let Supabase handle session management naturally
 
   const fetchUserProfile = async (userId: string, forceRefresh: boolean = false) => {
     try {
@@ -572,11 +490,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Login successful:', data.user.email);
         setAuthUser(data.user);
         setSessionLoaded(true);
-        setSessionStartTime(Date.now()); // Reset session start time on login
+        setInitialAuthCheck(true);
         
         // Force fresh profile fetch on login
         try {
           await fetchUserProfile(data.user.id, true); // Force refresh on login
+          console.log('Profile loaded successfully after login');
         } catch (profileError) {
           console.warn('Profile fetch failed during login, using minimal profile:', profileError);
           const minimalProfile = createMinimalUserProfile(data.user);
@@ -585,7 +504,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         setLoading(false);
-        setInitialAuthCheck(true);
         return { success: true };
       }
 
@@ -742,52 +660,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async (preserveRememberMe: boolean = false): Promise<void> => {
-    try {
-      console.log('Starting logout process...');
-      
-      // Optimistic local sign-out to avoid app-wide loading lock
-      setUser(null);
-      setAuthUser(null);
-      setIsAdmin(false);
-      setSessionStartTime(0); // Reset session start time on logout
-
-      // Sign out from Supabase first
-      await supabase.auth.signOut();
-      console.log('Supabase sign out completed');
-
-      // Clear all website data, cookies, and storage
-      if (preserveRememberMe) {
-        await clearAllAppDataAndCookiesPreservingRememberMe();
-        console.log('All app data and cookies cleared (preserving remember me)');
-      } else {
-        await clearAllAppDataAndCookies();
-        console.log('All app data and cookies cleared');
-      }
-
-      // Clear any remaining auth data from storage
-      clearAllAuthData();
-      console.log('Auth data cleared from storage');
-
-    } catch (error) {
-      console.error('Logout error:', error);
-      
-      // Even if there's an error, still try to clear local data
-      try {
-        if (preserveRememberMe) {
-          await clearAllAppDataAndCookiesPreservingRememberMe();
-        } else {
-          await clearAllAppDataAndCookies();
-        }
-        clearAllAuthData();
-      } catch (clearError) {
-        console.error('Error clearing data during logout:', clearError);
-      }
-    } finally {
-      // Ensure global loading overlay is not active after logout
-      setLoading(false);
-      console.log('Logout process completed');
-    }
+  const logout = async (): Promise<void> => {
+    console.log('Logout clicked - clearing all session data and redirecting...');
+    
+    // Use the nuclear option - clear everything and redirect
+    await clearSessionAndRedirect();
   };
 
   const updateWalletBalance = async (amount: number): Promise<void> => {
