@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { getFlutterwaveConfig, getFlutterwaveApiUrl } from '../_shared/flutterwave-config.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -152,27 +153,31 @@ serve(async (req) => {
       ...(wantsPermanent ? {} : { amount: Number(requestData.amount) })
     }
 
-    // Call Flutterwave API
-    const flutterwaveKey = Deno.env.get('FLUTTERWAVE_SECRET_KEY')
-    if (!flutterwaveKey) {
+    // Get Flutterwave configuration from admin settings
+    let flutterwaveConfig
+    try {
+      flutterwaveConfig = await getFlutterwaveConfig()
+    } catch (error) {
+      console.error('Error loading Flutterwave config:', error)
       return new Response(
-        JSON.stringify({ status: 'error', message: 'Flutterwave configuration missing' }),
+        JSON.stringify({ status: 'error', message: error.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log('Flutterwave Key (first 10 chars):', flutterwaveKey.substring(0, 10) + '...')
+    console.log('Flutterwave Key (first 10 chars):', flutterwaveConfig.secretKey.substring(0, 10) + '...')
+    console.log('Flutterwave Environment:', flutterwaveConfig.environment)
     console.log('Flutterwave Request Data:', JSON.stringify(flutterwaveData, null, 2))
 
-    // Use Flutterwave v3 endpoint (sandbox uses the same host with test keys)
-    const flutterwaveUrl = 'https://api.flutterwave.com/v3/virtual-account-numbers'
+    // Use Flutterwave v3 endpoint
+    const flutterwaveUrl = `${getFlutterwaveApiUrl(flutterwaveConfig.environment)}/virtual-account-numbers`
     
     console.log('Using Flutterwave URL:', flutterwaveUrl)
     
     const flutterwaveResponse = await fetch(flutterwaveUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${flutterwaveKey}`,
+        'Authorization': `Bearer ${flutterwaveConfig.secretKey}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },

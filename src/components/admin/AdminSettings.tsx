@@ -30,6 +30,11 @@ interface AdminSettings {
   referral_howitworks_step2_desc: string;
   referral_howitworks_step3_title: string;
   referral_howitworks_step3_desc: string;
+  // Flutterwave settings
+  flutterwave_secret_key: string;
+  flutterwave_public_key: string;
+  flutterwave_webhook_secret: string;
+  flutterwave_environment: 'test' | 'live';
 }
 
 export const AdminSettings: React.FC = () => {
@@ -56,6 +61,11 @@ export const AdminSettings: React.FC = () => {
     referral_howitworks_step2_desc: 'Your friend creates an account and buys their first plan',
     referral_howitworks_step3_title: 'You earn commission',
     referral_howitworks_step3_desc: 'You earn 10% commission on every purchase they make. Minimum withdrawal is ₦500.',
+    // Flutterwave settings
+    flutterwave_secret_key: '',
+    flutterwave_public_key: '',
+    flutterwave_webhook_secret: '',
+    flutterwave_environment: 'test',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -100,6 +110,11 @@ export const AdminSettings: React.FC = () => {
           referral_howitworks_step2_desc: settingsMap.referral_howitworks_step2_desc || 'Your friend creates an account and buys their first plan',
           referral_howitworks_step3_title: settingsMap.referral_howitworks_step3_title || 'You earn commission',
           referral_howitworks_step3_desc: settingsMap.referral_howitworks_step3_desc || 'You earn 10% commission on every purchase they make. Minimum withdrawal is ₦500.',
+          // Flutterwave settings
+          flutterwave_secret_key: settingsMap.flutterwave_secret_key || '',
+          flutterwave_public_key: settingsMap.flutterwave_public_key || '',
+          flutterwave_webhook_secret: settingsMap.flutterwave_webhook_secret || '',
+          flutterwave_environment: settingsMap.flutterwave_environment || 'test',
         });
       }
     } catch (error) {
@@ -473,6 +488,62 @@ export const AdminSettings: React.FC = () => {
                     <div className="text-gray-600">{settings.referral_howitworks_step3_desc}</div>
                   </li>
                 </ol>
+              </div>
+            </div>
+          </div>
+
+          {/* Flutterwave Settings */}
+          <div>
+            <h4 className="text-md font-semibold mb-4 text-gray-900">Flutterwave Payment Settings</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Environment</label>
+                  <select
+                    value={settings.flutterwave_environment}
+                    onChange={(e) => updateSetting('flutterwave_environment', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="test">Test (Sandbox)</option>
+                    <option value="live">Live (Production)</option>
+                  </select>
+                </div>
+                
+                <Input
+                  label="Secret Key"
+                  type="password"
+                  value={settings.flutterwave_secret_key}
+                  onChange={(value) => updateSetting('flutterwave_secret_key', value)}
+                  placeholder="FLWSECK-xxxxx or FLWSECK_TEST-xxxxx"
+                />
+                
+                <Input
+                  label="Public Key"
+                  value={settings.flutterwave_public_key}
+                  onChange={(value) => updateSetting('flutterwave_public_key', value)}
+                  placeholder="FLWPUBK-xxxxx or FLWPUBK_TEST-xxxxx"
+                />
+                
+                <Input
+                  label="Webhook Secret (Optional)"
+                  type="password"
+                  value={settings.flutterwave_webhook_secret}
+                  onChange={(value) => updateSetting('flutterwave_webhook_secret', value)}
+                  placeholder="Webhook verification secret"
+                />
+              </div>
+              
+              <div className="p-4 bg-orange-50 rounded-lg">
+                <h5 className="font-medium text-orange-900 mb-2">Payment Configuration</h5>
+                <div className="text-sm text-orange-800 space-y-2">
+                  <p><strong>Environment:</strong> {settings.flutterwave_environment === 'test' ? 'Test (Sandbox)' : 'Live (Production)'}</p>
+                  <p><strong>Secret Key:</strong> {settings.flutterwave_secret_key ? '••••••••' : 'Not set'}</p>
+                  <p><strong>Public Key:</strong> {settings.flutterwave_public_key ? '••••••••' : 'Not set'}</p>
+                  <div className="mt-3 p-2 bg-orange-100 rounded text-xs">
+                    <strong>Note:</strong> Test keys start with FLWSECK_TEST- and FLWPUBK_TEST-. 
+                    Live keys start with FLWSECK- and FLWPUBK-.
+                  </div>
+                </div>
               </div>
             </div>
           </div>

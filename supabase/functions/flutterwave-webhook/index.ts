@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { getFlutterwaveConfig } from '../_shared/flutterwave-config.ts'
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,12 +20,16 @@ serve(async (req) => {
   try {
     console.log("Webhook started - processing request");
     
-    // Get Flutterwave secret key for verification
-    const flutterwaveSecretKey = Deno.env.get("FLUTTERWAVE_SECRET_KEY");
-    console.log("Flutterwave secret key exists:", !!flutterwaveSecretKey);
-    
-    if (!flutterwaveSecretKey) {
-      throw new Error("Flutterwave secret key not configured");
+    // Get Flutterwave configuration from admin settings
+    let flutterwaveConfig
+    try {
+      flutterwaveConfig = await getFlutterwaveConfig()
+      console.log("Flutterwave config loaded successfully");
+      console.log("Environment:", flutterwaveConfig.environment);
+      console.log("Secret key exists:", !!flutterwaveConfig.secretKey);
+    } catch (error) {
+      console.error('Error loading Flutterwave config:', error)
+      throw new Error(`Failed to load Flutterwave configuration: ${error.message}`);
     }
 
     // Initialize Supabase client with service role key for admin access
@@ -36,6 +41,8 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     console.log("Supabase client created successfully");
+
+
 
     // Get the signature from the request headers
     const signature = req.headers.get("verif-hash");
