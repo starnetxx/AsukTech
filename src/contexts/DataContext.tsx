@@ -337,9 +337,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const handleVisibilityChange = (event: CustomEvent) => {
       if (event.detail?.visible) {
         const timeSinceLastRefresh = Date.now() - lastDataRefresh;
-        // If data is older than 5 minutes, refresh it
-        if (timeSinceLastRefresh > 5 * 60 * 1000) {
-          console.log('App became visible, refreshing stale data...');
+        // Only refresh if data is older than 30 minutes (reduced frequency)
+        if (timeSinceLastRefresh > 30 * 60 * 1000) {
+          console.log('App became visible, refreshing very stale data...');
           refreshData();
         }
       }
